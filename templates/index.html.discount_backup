@@ -1,0 +1,834 @@
+{% extends 'base.html' %}
+
+{% block title %}Economic Damages Calculator{% endblock %}
+
+{% block additional_styles %}
+    <style>
+        /* Ensure conditional fields are hidden by default */
+        .conditional-field {
+            display: none;
+        }
+        
+        /* Show conditional fields when they have the visible class */
+        .conditional-field.visible {
+            display: block;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Economic Damages Calculator</h2>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Progress Indicator -->
+        <div class="progress-indicator mb-4" id="progressBar">
+            <div class="progress-step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-title">Client<br>Information</div>
+            </div>
+            <div class="progress-step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-title">Employment<br>Details</div>
+            </div>
+            <div class="progress-step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-title">Collateral<br>Benefits</div>
+            </div>
+            <div class="progress-step" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-title">Missed<br>Time</div>
+            </div>
+            <div class="progress-step" data-step="5">
+                <div class="step-number">5</div>
+                <div class="step-title">Loss<br>Calculation</div>
+            </div>
+        </div>
+        
+        <form method="post" action="{{ url_for('calculate') }}" id="calculator-form">
+            <!-- Basic Information Section -->
+            <div class="section-card">
+                <h3 class="section-title"><i class="fas fa-user"></i> Client Information</h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="client_name" class="form-label required-field">Client Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input type="text" class="form-control" id="client_name" name="client_name" placeholder="Enter client's full name" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="province" class="form-label required-field">Province</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                <select class="form-select" id="province" name="province" required>
+                                    <option value="">Select Province</option>
+                                    <option value="nova scotia">Nova Scotia</option>
+                                    <option value="newfoundland">Newfoundland</option>
+                                    <option value="new brunswick">New Brunswick</option>
+                                    <option value="prince edward island">Prince Edward Island</option>
+                                </select>
+                            </div>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> Provincial laws determine applicable tax rates and benefits calculations.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Employment Information Section -->
+            <div class="section-card">
+                <h3 class="section-title"><i class="fas fa-briefcase"></i> Employment Information</h3>
+                
+                <div class="form-group mb-4">
+                    <label for="employment_type" class="form-label required-field">Employment Type</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                        <select class="form-select" id="employment_type" name="employment_type" required>
+                            <option value="">Select Type</option>
+                            <option value="salaried">Salaried</option>
+                            <option value="hourly">Hourly</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Conditional Fields for Salaried -->
+                <div class="salaried-field conditional-field mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="salary" class="form-label required-field">Annual Salary (CAD)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                    <input type="text" class="form-control" id="salary" name="salary" placeholder="Example: 65000">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="hours_per_day" class="form-label required-field">Hours Worked Per Day</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                    <input type="number" class="form-control" id="hours_per_day" name="hours_per_day" min="0" step="0.5" placeholder="Example: 8">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conditional Fields for Hourly -->
+                <div class="hourly-field conditional-field mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="hourly_rate" class="form-label required-field">Hourly Rate (CAD)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                    <input type="text" class="form-control" id="hourly_rate" name="hourly_rate" placeholder="Example: 22.50">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="hours_per_week" class="form-label required-field">Hours Per Week</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-business-time"></i></span>
+                                    <input type="text" class="form-control" id="hours_per_week" name="hours_per_week" placeholder="Example: 40">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-4">
+                        <div class="d-flex align-items-center">
+                            <label class="form-label me-3">Include 4% Vacation Pay</label>
+                            <label class="toggle-container">
+                                <input type="checkbox" name="include_vacation_pay" id="vacation_toggle" value="yes">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Vacation pay is calculated as an additional 4% on top of regular earnings.
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="form-group mb-4">
+                    <label for="working_days" class="form-label required-field">Working Days Per Year</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar-day"></i></span>
+                        <input type="number" class="form-control" id="working_days" name="working_days" min="1" max="365" value="252" required>
+                    </div>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Standard work year has 252 working days (365 days - 104 weekend days - 9 statutory holidays)
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Collateral Benefits Section -->
+            <div class="section-card">
+                <h3 class="section-title"><i class="fas fa-hand-holding-usd"></i> Collateral Benefits</h3>
+                
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <h5 class="text-primary">Benefits Received to Date</h5>
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-info-circle"></i> Enter the <strong>total amount received to date</strong> for each benefit category since the date of loss
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="ei_benefits_to_date" class="form-label">EI Benefits (to date)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="ei_benefits_to_date" name="ei_benefits_to_date" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="section_b_to_date" class="form-label">Section B Benefits (to date)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="section_b_to_date" name="section_b_to_date" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="ltd_benefits_to_date" class="form-label">LTD Benefits (to date)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="ltd_benefits_to_date" name="ltd_benefits_to_date" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="cppd_benefits_to_date" class="form-label">CPPD Benefits (to date)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="cppd_benefits_to_date" name="cppd_benefits_to_date" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="other_benefits_to_date" class="form-label">Other Benefits (to date)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="other_benefits_to_date" name="other_benefits_to_date" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12 mb-3">
+                        <h5 class="text-primary">Annual Benefits Going Forward</h5>
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-info-circle"></i> Enter the <strong>annual amount</strong> for each benefit category going forward
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="ei_benefits_annual" class="form-label">EI Benefits (annual)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="ei_benefits_annual" name="ei_benefits_annual" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="ei_benefits_start_date" class="form-label">EI Benefits Start Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" class="form-control" id="ei_benefits_start_date" name="ei_benefits_start_date">
+                            </div>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> EI sickness benefits are limited to 26 weeks maximum.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="section_b_annual" class="form-label">Section B Benefits (annual)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="section_b_annual" name="section_b_annual" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="ltd_benefits_annual" class="form-label">LTD Benefits (annual)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="ltd_benefits_annual" name="ltd_benefits_annual" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="cppd_benefits_annual" class="form-label">CPPD Benefits (annual)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="cppd_benefits_annual" name="cppd_benefits_annual" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="other_benefits_annual" class="form-label">Other Benefits (annual)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                <input type="number" class="form-control" id="other_benefits_annual" name="other_benefits_annual" min="0" step="0.01" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Missed Time Section -->
+            <div class="section-card">
+                <h3 class="section-title"><i class="fas fa-calendar-times"></i> Missed Time</h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="missed_time_unit" class="form-label required-field">Unit of Missed Time</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-ruler"></i></span>
+                                <select class="form-select" id="missed_time_unit" name="missed_time_unit" required>
+                                    <option value="days">Days</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="weeks">Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="missed_time" class="form-label required-field">Number of Missed Time Units</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                                <input type="number" class="form-control" id="missed_time" name="missed_time" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Past Lost Wages Section -->
+            <div class="section-card">
+                <h3 class="section-title"><i class="fas fa-history"></i> Loss Calculation</h3>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="loss_date" class="form-label required-field">Date of Loss/Accident</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" class="form-control" id="loss_date" name="loss_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="start_date" class="form-label required-field">Future Lost Wages Start Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="return_status" class="form-label required-field">Return Status</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user-check"></i></span>
+                                <select class="form-select" id="return_status" name="return_status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="returning to work">Returning to Work</option>
+                                    <option value="total disability">Total Disability</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conditional fields based on return status -->
+                <div class="return-work-field conditional-field mb-4">
+                    <div class="form-group">
+                        <label for="end_date" class="form-label required-field">Speculative Return to Work Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
+                            <input type="date" class="form-control" id="end_date" name="end_date">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="disability-fields conditional-field mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="birthdate" class="form-label required-field">Client's Birthdate</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-birthday-cake"></i></span>
+                                    <input type="date" class="form-control" id="birthdate" name="birthdate">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="retirement_age" class="form-label required-field">Retirement Age</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user-clock"></i></span>
+                                    <input type="number" class="form-control" id="retirement_age" name="retirement_age" min="50" max="90" value="65">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group mb-4">
+                    <label for="discount_rate" class="form-label required-field">
+                        Annual Discount Rate (%)
+                        <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Rate used to calculate the present value of future income losses, considering the time value of money">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-percentage"></i></span>
+                        <input type="number" class="form-control" id="discount_rate" name="discount_rate" min="0" max="10" step="0.1" value="2.5" required>
+                    </div>
+               </div>
+
+              <!-- PJI Rate Field -->
+              <div class="form-group mb-4 mt-4">
+                  <label for="pji_rate_display" class="form-label">
+                      Pre-Judgment Interest Rate (%)
+                      <i class="fas fa-info-circle text-primary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                          title="Automatically calculated using T-Bill rates from the date of loss to the calculation date"></i>
+                  </label>
+                  <div class="input-group">
+                      <span class="input-group-text">
+                          <i class="fas fa-percentage"></i>
+                      </span>
+                      <input type="text" class="form-control bg-dark text-light" id="pji_rate_display" 
+                          readonly value="Auto-calculated" style="opacity: 0.7;">
+                      <input type="hidden" id="pji_rate" name="pji_rate" value="">
+                   </div>
+               </div>
+		                
+                
+                <!-- Hidden field to always use the proposal document type -->
+                <input type="hidden" name="doc_type" value="2">
+            </div>
+            
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-5">
+                <button type="submit" class="btn btn-primary btn-lg px-5 gap-3 btn-icon">
+                    <i class="fas fa-calculator me-2"></i> Generate Settlement Proposal
+                </button>
+                <button type="reset" class="btn btn-outline-primary btn-lg px-4 btn-icon">
+                    <i class="fas fa-undo me-2"></i> Reset Form
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Progress bar functionality
+        const progressBar = document.getElementById('progressBar');
+        const progressSteps = document.querySelectorAll('.progress-step');
+        
+        function updateProgress(step) {
+            // Update active step
+            progressSteps.forEach((stepEl) => {
+                stepEl.classList.remove('active');
+                if (parseInt(stepEl.dataset.step) < step) {
+                    stepEl.classList.add('completed');
+                }
+                if (parseInt(stepEl.dataset.step) === step) {
+                    stepEl.classList.add('active');
+                }
+            });
+            
+            // Update progress bar width
+            const progressWidth = ((step - 1) / (progressSteps.length - 1)) * 100;
+            progressBar.style.setProperty('--progress-width', progressWidth + '%');
+        }
+        
+        // Monitor form sections for completion
+        function checkSectionCompletion() {
+            // Client info - step 1
+            if (document.getElementById('client_name').value && 
+                document.getElementById('province').value) {
+                updateProgress(2);
+            }
+            
+            // Employment - step 2
+            if (document.getElementById('employment_type').value) {
+                const isHourly = document.getElementById('employment_type').value === 'hourly';
+                const isSalaried = document.getElementById('employment_type').value === 'salaried';
+                
+                if ((isHourly && document.getElementById('hourly_rate').value && document.getElementById('hours_per_week').value) ||
+                    (isSalaried && document.getElementById('salary').value && document.getElementById('hours_per_day').value)) {
+                    updateProgress(3);
+                }
+            }
+            
+            // Benefits - step 3
+            // Just check if any field has been touched
+            const benefitFields = document.querySelectorAll('#ei_benefits, #section_b, #ltd_benefits, #cppd_benefits, #other_benefits');
+            let benefitsTouched = false;
+            benefitFields.forEach(field => {
+                if (field.value !== '0') {
+                    benefitsTouched = true;
+                }
+            });
+            if (benefitsTouched) {
+                updateProgress(4);
+            }
+            
+            // Missed time - step 4
+            if (document.getElementById('missed_time').value) {
+                updateProgress(5);
+            }
+        }
+        
+        // Handle employment type conditional fields
+        const employmentType = document.getElementById('employment_type');
+        const salariedFields = document.querySelectorAll('.salaried-field');
+        const hourlyFields = document.querySelectorAll('.hourly-field');
+        
+        employmentType.addEventListener('change', function() {
+            if (this.value === 'salaried') {
+                salariedFields.forEach(field => {
+                    field.classList.add('visible');
+                });
+                hourlyFields.forEach(field => {
+                    field.classList.remove('visible');
+                });
+                // Make salaried fields required
+                document.getElementById('salary').required = true;
+                document.getElementById('hours_per_day').required = true;
+                // Make hourly fields not required
+                document.getElementById('hourly_rate').required = false;
+                document.getElementById('hours_per_week').required = false;
+                
+                checkSectionCompletion();
+            } else if (this.value === 'hourly') {
+                salariedFields.forEach(field => {
+                    field.classList.remove('visible');
+                });
+                hourlyFields.forEach(field => {
+                    field.classList.add('visible');
+                });
+                // Make hourly fields required
+                document.getElementById('hourly_rate').required = true;
+                document.getElementById('hours_per_week').required = true;
+                // Make salaried fields not required
+                document.getElementById('salary').required = false;
+                document.getElementById('hours_per_day').required = false;
+                
+                checkSectionCompletion();
+            } else {
+                salariedFields.forEach(field => {
+                    field.classList.remove('visible');
+                });
+                hourlyFields.forEach(field => {
+                    field.classList.remove('visible');
+                });
+                // Reset required attributes
+                document.getElementById('salary').required = false;
+                document.getElementById('hours_per_day').required = false;
+                document.getElementById('hourly_rate').required = false;
+                document.getElementById('hours_per_week').required = false;
+            }
+        });
+        
+        // Handle return status conditional fields
+        const returnStatus = document.getElementById('return_status');
+        const returnWorkField = document.querySelector('.return-work-field');
+        const disabilityFields = document.querySelector('.disability-fields');
+        
+        returnStatus.addEventListener('change', function() {
+            console.log("Return status changed to:", this.value);
+            if (this.value === 'returning to work') {
+                returnWorkField.classList.add('visible');
+                disabilityFields.classList.remove('visible');
+                // Make return to work fields required
+                document.getElementById('end_date').required = true;
+                // Make disability fields not required
+                document.getElementById('birthdate').required = false;
+                document.getElementById('retirement_age').required = false;
+                
+                checkSectionCompletion();
+            } else if (this.value === 'total disability') {
+                console.log("Showing disability fields");
+                returnWorkField.classList.remove('visible');
+                disabilityFields.classList.add('visible');
+                // Make disability fields required
+                document.getElementById('birthdate').required = true;
+                document.getElementById('retirement_age').required = true;
+                // Make return to work fields not required
+                document.getElementById('end_date').required = false;
+                
+                checkSectionCompletion();
+            } else {
+                returnWorkField.classList.remove('visible');
+                disabilityFields.classList.remove('visible');
+                // Reset required attributes
+                document.getElementById('end_date').required = false;
+                document.getElementById('birthdate').required = false;
+                document.getElementById('retirement_age').required = false;
+            }
+        });
+        
+        // Handle vacation pay toggle
+        const vacationToggle = document.getElementById('vacation_toggle');
+        
+        vacationToggle.addEventListener('change', function() {
+            if (this.checked) {
+                this.value = 'yes';
+            } else {
+                this.value = 'no';
+            }
+        });
+        
+        // Set current date as the default for date inputs
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('loss_date').value = today;
+        document.getElementById('start_date').value = today;
+        
+        // Add input listeners for progress tracking
+        const allInputs = document.querySelectorAll('input, select');
+        allInputs.forEach(input => {
+            input.addEventListener('change', checkSectionCompletion);
+            input.addEventListener('input', checkSectionCompletion);
+        });
+        
+        // Form validation
+        document.getElementById('calculator-form').addEventListener('submit', function(event) {
+            // Additional validation can be added here if needed
+            // For example, ensure end_date is after start_date
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const returnStatusValue = document.getElementById('return_status').value;
+            
+            if (returnStatusValue === 'returning to work' && new Date(endDate) <= new Date(startDate)) {
+                alert('Return to work date must be after the future lost wages start date');
+                event.preventDefault();
+                return false;
+            }
+        });
+        
+        // Update PJI rate when loss date changes
+        const lossDateInput = document.getElementById('loss_date');
+        if (lossDateInput) {
+            lossDateInput.addEventListener('change', function() {
+                // Update PJI rate when loss date changes
+                updatePJIRate(this.value);
+            });
+            
+            // Also call on page load to initialize with default date
+            if (lossDateInput.value) {
+                setTimeout(() => updatePJIRate(lossDateInput.value), 100); // Delay slightly to ensure DOM is ready
+            }
+        }
+
+        // Function to update PJI rate
+        function updatePJIRate(lossDate) {
+            if (!lossDate) return;
+            
+            const pjiDisplay = document.getElementById('pji_rate_display');
+            const pjiInput = document.getElementById('pji_rate');
+            
+            // Set to calculating status
+            if (pjiDisplay) pjiDisplay.value = "Calculating...";
+            
+            // Get the current date for end date
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Make API request to get PJI rate
+            fetch(`/api/pji-rate?start_date=${encodeURIComponent(lossDate)}&end_date=${encodeURIComponent(today)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update display and hidden input with the rate
+                    if (data && data.rate !== undefined) {
+                        if (pjiDisplay) pjiDisplay.value = data.rate.toFixed(2) + '%';
+                        if (pjiInput) pjiInput.value = data.rate;
+                    } else if (data && data.error) {
+                        if (pjiDisplay) pjiDisplay.value = "Error: " + data.error;
+                    } else {
+                        if (pjiDisplay) pjiDisplay.value = "2.50%"; // Fallback default
+                        if (pjiInput) pjiInput.value = 2.5;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching PJI rate:', error);
+                    // Set fallback value on error
+                    if (pjiDisplay) pjiDisplay.value = "2.50%"; // Default value
+                    if (pjiInput) pjiInput.value = 2.5;
+                });
+        }
+        
+        function initStickyProgressBar() {
+            const progressBar = document.getElementById('progressBar');
+            if (!progressBar) return;
+            
+            // Create a wrapper div to maintain layout space when bar becomes fixed
+            const wrapper = document.createElement('div');
+            wrapper.className = 'sticky-progress-container';
+            progressBar.parentNode.insertBefore(wrapper, progressBar);
+            wrapper.appendChild(progressBar);
+            
+            // Clone the progress bar for the sticky version
+            const stickyBar = progressBar.cloneNode(true);
+            stickyBar.id = 'stickyProgressBar';
+            stickyBar.classList.add('sticky');
+            document.body.appendChild(stickyBar);
+            
+            // Sync the active states between the two progress bars
+            function syncProgressBars() {
+                const activeStep = progressBar.querySelector('.progress-step.active');
+                const completedSteps = progressBar.querySelectorAll('.progress-step.completed');
+                
+                if (activeStep) {
+                    const activeIndex = activeStep.dataset.step;
+                    const stickyActiveStep = stickyBar.querySelector(`.progress-step[data-step="${activeIndex}"]`);
+                    stickyBar.querySelectorAll('.progress-step').forEach(step => step.classList.remove('active', 'completed'));
+                    
+                    if (stickyActiveStep) {
+                        stickyActiveStep.classList.add('active');
+                        
+                        // Add completed class to previous steps
+                        stickyBar.querySelectorAll('.progress-step').forEach(step => {
+                            if (parseInt(step.dataset.step) < parseInt(activeIndex)) {
+                                step.classList.add('completed');
+                            }
+                        });
+                    }
+                    
+                    // Set progress width
+                    const progressWidth = ((parseInt(activeIndex) - 1) / (progressBar.querySelectorAll('.progress-step').length - 1)) * 100;
+                    stickyBar.style.setProperty('--progress-width', progressWidth + '%');
+                }
+            }
+            
+            // Check scroll position and show/hide sticky bar
+            function checkScrollPosition() {
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const isOffScreen = wrapperRect.bottom < 0;
+                
+                if (isOffScreen) {
+                    stickyBar.classList.add('visible');
+                } else {
+                    stickyBar.classList.remove('visible');
+                }
+            }
+            
+            // Initialize and add event listeners
+            window.addEventListener('scroll', checkScrollPosition);
+            
+            // Watch for changes to the original progress bar
+            const observer = new MutationObserver(syncProgressBars);
+            observer.observe(progressBar, { attributes: true, childList: true, subtree: true });
+            
+            // Initial sync
+            syncProgressBars();
+        }
+        
+        initStickyProgressBar();
+    });
+     document.addEventListener('DOMContentLoaded', function() {
+        // (Your existing JavaScript code)
+        
+        // Add the new T-Bill rate calculation code here:
+        // Get references to the relevant form elements
+        const lossDateInput = document.getElementById('loss_date');
+        const calculationDateInput = document.getElementById('start_date'); // Using start_date as calculation date
+        const pjiRateDisplay = document.getElementById('pji_rate_display');
+        const pjiRateInput = document.getElementById('pji_rate');
+        
+        // Function to update PJI rate based on selected dates
+        function updatePJIRate() {
+            // Only proceed if both dates are valid
+            if (!lossDateInput.value || !calculationDateInput.value) {
+                return;
+            }
+            
+            // Show loading indicator
+            pjiRateDisplay.value = "Calculating...";
+            
+            // Make API call to get T-Bill rate
+            fetch(`/api/tbill-rate?start_date=${lossDateInput.value}&end_date=${calculationDateInput.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error("Error fetching T-Bill rate:", data.error);
+                        pjiRateDisplay.value = "Error: Could not calculate";
+                        pjiRateInput.value = "2.5"; // Default fallback
+                    } else {
+                        // Update display and hidden input with the rate
+                        const rate = data.rate;
+                        pjiRateDisplay.value = `${rate}%`;
+                        pjiRateInput.value = rate;
+                        console.log(`Updated PJI rate to ${rate}%`);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching T-Bill rate:", error);
+                    pjiRateDisplay.value = "Error: Could not calculate";
+                    pjiRateInput.value = "2.5"; // Default fallback
+                });
+        }
+        
+        // Add event listeners to update PJI rate when dates change
+        if (lossDateInput && calculationDateInput) {
+            lossDateInput.addEventListener('change', updatePJIRate);
+            calculationDateInput.addEventListener('change', updatePJIRate);
+            
+            // Also update when the page loads if dates are already set
+            if (lossDateInput.value && calculationDateInput.value) {
+                updatePJIRate();
+            }
+        }
+    });
+</script>
+{% endblock %}

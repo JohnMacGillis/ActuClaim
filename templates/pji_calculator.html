@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PJI Calculator - ActuClaim</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .calculator-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .button {
+            background-color: #4a7ab1;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #3a5f8f;
+        }
+        .result-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            display: none;
+        }
+        .info-box {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h1>Pre-Judgment Interest Calculator</h1>
+        
+        <div class="info-box">
+            <p><strong>Note:</strong> PJI is now automatically calculated based on the average Treasury Bill rates from the date of loss to the calculation date.</p>
+        </div>
+        
+        <form id="pji-calculator-form">
+            <div class="form-group">
+                <label for="loss-date">Date of Loss:</label>
+                <input type="date" id="loss-date" name="loss_date" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="calculation-date">Date of Calculation (default is today):</label>
+                <input type="date" id="calculation-date" name="calculation_date">
+            </div>
+            
+            <div class="form-group">
+                <label for="amount">Amount ($):</label>
+                <input type="number" id="amount" name="amount" min="0" step="0.01" required>
+            </div>
+            
+            <button type="submit" class="button">Calculate PJI</button>
+        </form>
+        
+        <div id="result-container" class="result-container">
+            <h2>PJI Calculation Results</h2>
+            <table>
+                <tr>
+                    <td><strong>T-Bill Rate:</strong></td>
+                    <td id="tbill-rate"></td>
+                </tr>
+                <tr>
+                    <td><strong>Period:</strong></td>
+                    <td id="period"></td>
+                </tr>
+                <tr>
+                    <td><strong>Principal Amount:</strong></td>
+                    <td id="principal-amount"></td>
+                </tr>
+                <tr>
+                    <td><strong>Interest Amount:</strong></td>
+                    <td id="interest-amount"></td>
+                </tr>
+                <tr>
+                    <td><strong>Total Amount:</strong></td>
+                    <td id="total-amount"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        $(document).ready(function() {
+            // Set default dates
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            $('#calculation-date').val(formattedDate);
+            
+            // Handle form submission
+            $('#pji-calculator-form').submit(function(e) {
+                e.preventDefault();
+                
+                const lossDate = $('#loss-date').val();
+                const calculationDate = $('#calculation-date').val() || formattedDate;
+                const amount = parseFloat($('#amount').val());
+                
+                // Send AJAX request to calculate PJI
+                $.ajax({
+                    url: '/calculate-pji',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        loss_date: lossDate,
+                        calculation_date: calculationDate,
+                        amount: amount
+                    }),
+                    success: function(response) {
+                        // Display results
+                        $('#tbill-rate').text(response.tbill_rate + '%');
+                        $('#period').text(response.years_diff + ' years (' + response.days_diff + ' days)');
+                        $('#principal-amount').text('$' + response.amount.toFixed(2));
+                        $('#interest-amount').text('$' + response.interest_amount.toFixed(2));
+                        $('#total-amount').text('$' + response.total_amount.toFixed(2));
+                        
+                        // Show result container
+                        $('#result-container').show();
+                    },
+                    error: function(xhr) {
+                        alert('Error calculating PJI: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

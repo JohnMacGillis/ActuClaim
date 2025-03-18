@@ -1,0 +1,10 @@
+/* Target the exact logo tagline element */
+.logo-tagline {
+    color: white !important;
+    font-weight: bold !important;
+}
+
+/* Target any h2 with the calculator text */
+h2.mb-0 {
+    color: white !important;
+}
