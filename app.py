@@ -32,10 +32,19 @@ def index():
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
+    # Initialize variables that might be used later
+    past_lost_wages_with_interest = 0
+    calculation_details = {}
+    present_value = 0
     try:
         # Get client information
         client_name = request.form.get('client_name', 'Client')
-        province = request.form.get('province', 'nova scotia').lower()
+        province = request.form.get('province', 'nova scotia')
+        dependents = int(request.form.get("dependents", "0"))
+        # Get number of dependents
+        dependents = int(request.form.get("dependents", 0))
+        # Get number of dependents
+        dependents = int(request.form.get("dependents", 0))
         
         # Helper function for safe float conversion
         def safe_float(value_str, default=0):
@@ -67,8 +76,11 @@ def calculate():
             salary = safe_float(request.form.get('salary'), 0)
             hours_per_day = safe_float(request.form.get('hours_per_day'), 8)
         
+        # Get number of dependents
+        num_dependents = int(request.form.get("num_dependents", 0))
+
         # Calculate take-home pay
-        result = calculate_take_home(salary, province, working_days, hours_per_day, is_hourly, hours_per_week)
+        result = calculate_take_home(salary, province, working_days, hours_per_day, is_hourly, hours_per_week, dependents)
         
         # Get collateral benefits
         ei_benefits_to_date = safe_float(request.form.get('ei_benefits_to_date'))
@@ -161,6 +173,10 @@ def calculate():
         
         time_fraction = fraction_of_year.get(missed_time_unit, 0)
         
+	# Add dependents to calculation details
+        calculation_details = {} # Initialize empty dictionary if needed
+        calculation_details["Dependents"] = str(dependents)
+        
         missed_pay = missed_time * result.get(time_unit_map.get(missed_time_unit, "Daily Net Pay"), 0)
         
         # Calculate collateral benefits deduction for past lost wages
@@ -183,29 +199,34 @@ def calculate():
             collateral_benefits["CPPD Benefits (annual)"] = cppd_benefits_annual
             collateral_benefits["Total Annual Future Benefits"] = total_annual_future_benefits
         
-        # Calculate past lost wages with interest using T-Bill rates
-        try:
-            print("Calling calculate_past_lost_wages_with_interest with:", net_past_lost_wages, loss_date.strftime('%Y-%m-%d'))
-            past_lost_wages_with_interest, calculation_details = calculate_past_lost_wages_with_interest(
-                net_past_lost_wages,
-                loss_date.strftime('%Y-%m-%d'),  # Convert date object to string
-                None  # Pass None to use T-Bill rates automatically
-            )
-            print("Function returned:", past_lost_wages_with_interest)
-        except Exception as e:
-            print(f"Error in calculate_past_lost_wages_with_interest: {e}")
-            # Provide default values
-            past_lost_wages_with_interest = net_past_lost_wages  # Use base amount without interest
-            calculation_details = {
-                "Loss Date": loss_date.strftime('%Y-%m-%d'),
-                "Calculation Date": datetime.date.today().strftime('%Y-%m-%d'),
-                "Years Between": 0,
-                "PJI Rate": 0,
-                "Base Amount": net_past_lost_wages,
-                "Interest Amount": 0,
-                "Past Lost Wages with Interest": net_past_lost_wages
-            }
-        # Handle return status with safer default and validation
+            # Initialize variables with default values
+            past_lost_wages_with_interest = net_past_lost_wages
+            calculation_details = {}
+            # Calculate past lost wages with interest using T-Bill rates
+            try:
+                print("Calling calculate_past_lost_wages_with_interest with:", net_past_lost_wages, loss_date.strftime('%Y-%m-%d'))
+                past_lost_wages_with_interest, calculation_details = calculate_past_lost_wages_with_interest(
+                    net_past_lost_wages,
+                    loss_date.strftime('%Y-%m-%d'),  # Convert date object to string
+                    None  # Pass None to use T-Bill rates automatically
+                )
+                calculation_details["Dependents"] = str(dependents)
+                print("Function returned:", past_lost_wages_with_interest)
+            except Exception as e:
+                print(f"Error in calculate_past_lost_wages_with_interest: {e}")
+                # Provide default values
+                past_lost_wages_with_interest = net_past_lost_wages  # Use base amount without interest
+                calculation_details = {
+                "Dependents": dependents,
+                    "Loss Date": loss_date.strftime('%Y-%m-%d'),
+                    "Calculation Date": datetime.date.today().strftime('%Y-%m-%d'),
+                    "Years Between": 0,
+                    "PJI Rate": 0,
+                    "Base Amount": net_past_lost_wages,
+                    "Interest Amount": 0,
+                    "Past Lost Wages with Interest": net_past_lost_wages
+                }
+            # Handle return status with safer default and validation
         return_status = request.form.get('return_status')
         if not return_status:
             return_status = 'returning to work'  # Default value
@@ -342,6 +363,7 @@ def calculate():
             total_damages=total_damages,
             collateral_benefits=collateral_benefits,
             missed_time_unit=missed_time_unit,
+            past_lost_wages_with_interest=past_lost_wages_with_interest,
             missed_time=missed_time,
             file_path=file_path,
             filename=filename,
