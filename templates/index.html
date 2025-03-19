@@ -51,6 +51,7 @@
         <form method="post" action="{{ url_for('calculate') }}" id="calculator-form">
             <!-- Basic Information Section -->
             <div class="section-card">
+                        <div class="form-group mb-4">
                 <h3 class="section-title"><i class="fas fa-user"></i> Client Information</h3>
                 
                 <div class="row">
@@ -62,21 +63,7 @@
                                 <input type="text" class="form-control" id="client_name" name="client_name" placeholder="Enter client's full name" required>
                             </div>
                         </div>
-                <div class="col-md-6">
-                    <div class="form-group mb-4">
-                        <label for="dependents" class="form-label">Number of Dependents (under 18)</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-child"></i></span>
-                            <input type="number" class="form-control" id="dependents" name="dependents" min="0" value="0">
-                        </div>
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Dependents under 18 qualify for benefits ($2,616 per child, up to $8,375)
-                        </small>
                     </div>
-                </div>
-
-                    </div>
-                    
                     <div class="col-md-6">
                         <div class="form-group mb-4">
                             <label for="province" class="form-label required-field">Province</label>
@@ -88,27 +75,31 @@
                                     <option value="newfoundland">Newfoundland</option>
                                     <option value="new brunswick">New Brunswick</option>
                                     <option value="prince edward island">Prince Edward Island</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="form-group mb-4">
-                <label for="taxYear" class="form-label">Tax Year</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                    <select class="form-select" id="taxYear" name="tax_year">
-                        {% for year in available_tax_years %}
-                            <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-        </div>
                                 </select>
                             </div>
                             <small class="form-text text-muted">
                                 <i class="fas fa-info-circle"></i> Provincial laws determine applicable tax rates and benefits calculations.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            </small>
+                            <label for="dependents" class="form-label">Number of Dependents (under 18)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-child"></i></span>
+                                <input type="number" class="form-control" id="dependents" name="dependents" min="0" value="0">
+                            </div>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> Dependents under 18 qualify for benefits ($2,616 per child, up to $8,375)
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                            </div>
+                            <small class="form-text text-muted">
                             </small>
                         </div>
                     </div>
@@ -202,6 +193,23 @@
                     </div>
                     <small class="form-text text-muted">
                         <i class="fas fa-info-circle"></i> Standard work year has 252 working days (365 days - 104 weekend days - 9 statutory holidays)
+            <!-- Tax Year Selection -->
+            <div class="col-md-6">
+                <div class="form-group mb-4">
+                    <label for="taxYear" class="form-label">Tax Year</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                        <select class="form-select" id="taxYear" name="tax_year">
+                            {% for year in available_tax_years %}
+                                <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Tax year for calculation
+                    </small>
+                </div>
+            </div>
                     </small>
                 </div>
             </div>
