@@ -336,7 +336,10 @@ def calculate():
                 missed_time=missed_time,
                 output_path=file_path,
                 birthdate=birthdate,
-                retirement_age=retirement_age
+                retirement_age=retirement_age,
+    loss_date=loss_date,
+    current_date=today,
+    ei_days_remaining=max(0, 182 - (today - ei_start_date).days)
             )
             
             print(f"Enhanced PDF report saved successfully at: {file_path}")
@@ -368,7 +371,10 @@ def calculate():
             file_path=file_path,
             filename=filename,
             birthdate=birthdate,
-            retirement_age=retirement_age
+            retirement_age=retirement_age,
+    loss_date=loss_date,
+    current_date=today,
+    ei_days_remaining=max(0, 182 - (today - ei_start_date).days)
         )
     
     except Exception as e:
