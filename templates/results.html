@@ -1,812 +1,273 @@
 {% extends 'base.html' %}
 
-{% block title %}Economic Damages Calculator - Results{% endblock %}
+{% block title %}Economic Damages Calculation{% endblock %}
 
-{% block additional_styles %}
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/results-minimalist.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header bg-primary">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2 class="mb-0">Economic Damages Assessment</h2>
+<div class="container results-container">
+    <div class="results-header">
+        <div class="header-content">
+            <h1>Economic Damages Assessment</h1>
+            <div class="download-section">
+                {% if filename %}
+                <a href="{{ url_for('download', filename=filename) }}" class="btn btn-primary download-btn">
+                    <i class="fas fa-download"></i> Download Full Report
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
-    <div class="card-body">
-        <!-- Summary Box -->
-        <div class="summary-box mb-4">
-            <div class="row align-items-center">
-                <div class="col-md-7">
-                    <h3 class="section-title"><i class="fas fa-chart-pie"></i> Economic Damages Summary</h3>
-                    <table class="table">
-                        <tbody>
-                            <tr>
-                                <th style="width: 60%;">Past Lost Wages with Interest</th>
-                                <td class="text-end">${{ "{:,.2f}".format(net_past_lost_wages if net_past_lost_wages else calculation_details.get('Past Lost Wages with Interest', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th>Future Lost Wages (Present Value)</th>
-                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('present_value', 0)) }}</td>
-                            </tr>
-                            <tr class="total-row">
-                                <th>TOTAL ECONOMIC DAMAGES</th>
-                                <td class="text-end total-amount">${{ "{:,.2f}".format(total_damages) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="col-md-5 text-center">
-                    {% if file_path %}
-                    <div class="download-file-wrapper">
-                        <a href="{{ url_for('download', filename=filename) }}" class="btn download-btn btn-lg btn-primary">
-                            <i class="fas fa-download me-2"></i> Download Detailed Report
-                        </a>
-                        <p class="small text-white-50 mt-3">
-                            <i class="fas fa-file-pdf me-1"></i> Complete calculations in PDF format
-                        </p>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> Document generation is not available
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Enhanced Visualizations -->
-        <div class="calculation-section mb-4">
-            <h3><i class="fas fa-chart-line"></i> Economic Damages Visualization</h3>
-            
-            <div class="row mb-4">
-                <!-- Past vs Future Damages Chart -->
-                <div class="col-md-6">
-                    <div class="card bg-dark">
-                        <div class="card-header">
-                            <h5 class="mb-0 text-primary"><i class="fas fa-chart-pie me-2"></i>Damages Distribution</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container" style="position: relative; height: 300px;">
-                                <canvas id="damagesChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Annual Income & Benefits Over Time -->
-                <div class="col-md-6">
-                    <div class="card bg-dark">
-                        <div class="card-header">
-                            <h5 class="mb-0 text-primary"><i class="fas fa-chart-line me-2"></i>Collateral Benefits Over Time</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container" style="position: relative; height: 300px;">
-                                <canvas id="benefitsTimelineChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row">
-                <!-- Net Income Components Chart -->
-                <div class="col-md-12">
-                    <div class="card bg-dark">
-                        <div class="card-header">
-                            <h5 class="mb-0 text-primary"><i class="fas fa-layer-group me-2"></i>Income Components Over Time</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container" style="position: relative; height: 300px;">
-                                <canvas id="incomeComponentsChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Reorganized Tables -->
+
+    <div class="damages-summary-card">
+        <table class="table damages-summary-table">
+            <tbody>
+                <tr>
+                    <td>Past Lost Wages</td>
+                    <td class="text-end">${{ "{:,.2f}".format(net_past_lost_wages) }}</td>
+                </tr>
+                <tr>
+                    <td>Future Lost Wages</td>
+                    <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('present_value', 0)) }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td>Total Economic Damages</td>
+                    <td class="text-end">${{ "{:,.2f}".format(total_damages) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="calculation-section">
         <div class="row">
-            <!-- Left Column - Income Summary & Lost Wages -->
             <div class="col-md-6">
-                <!-- Income Summary Table -->
-                <div class="calculation-section">
-                    <h3><i class="fas fa-money-bill-wave"></i> Income Summary</h3>
-                    <table class="table table-striped table-sm">
+                <div class="card income-summary">
+                    <h2>Income Summary</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <tr>
-                            <tr>
-                                <th><i class="fas fa-dollar-sign text-primary me-2"></i>Gross Income</th>
+                                <td>Gross Income</td>
                                 <td class="text-end">${{ "{:,.2f}".format(result.get("Gross Income", 0)) }}</td>
                             </tr>
                             <tr>
-                                <th><i class="fas fa-child text-primary me-2"></i>Dependent Benefit</th>
-                                <td class="text-end">${{ "{:,.2f}".format(result.get("Dependent Benefit", 0)) }}</td>
-                            </tr>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Federal Tax</th>
-                                <td class="text-end">${{ "{:,.2f}".format(result.get('Federal Tax', 0)) }}</td>
+                                <td>Federal Tax</td>
+                                <td class="text-end">-${{ "{:,.2f}".format(result.get('Federal Tax', 0)) }}</td>
                             </tr>
                             <tr>
-                                <th><i class="fas fa-landmark text-primary me-2"></i>Provincial Tax</th>
-                                <td class="text-end">
-                                {% set found_provincial_tax = False %}
-                                {% for key, value in result.items() %}
-                                    {% if 'tax' in key|lower and 'federal' not in key|lower %}
-                                        ${{ "{:,.2f}".format(value) }}
-                                        {% set found_provincial_tax = True %}
-                                    {% endif %}
-                                {% endfor %}
-                                
-                                </td>
+                                <td>Provincial Tax</td>
+                                <td class="text-end">-${{ "{:,.2f}".format(result.get('Provincial Tax', 0)) }}</td>
                             </tr>
                             <tr>
-                                <th><i class="fas fa-piggy-bank text-primary me-2"></i>CPP/EI Contributions</th>
-                                <td class="text-end">${{ "{:,.2f}".format(result.get('CPP Contribution', 0) + result.get('CPP2 Contribution', 0) + result.get('EI Contribution', 0)) }}</td>
+                                <td>CPP/EI Contributions</td>
+                                <td class="text-end">-${{ "{:,.2f}".format(result.get('CPP Contribution', 0) + result.get('EI Contribution', 0)) }}</td>
                             </tr>
                             <tr class="total-row">
-                                <th><i class="fas fa-wallet text-primary me-2"></i>Net Income</th>
-                                <td class="text-end highlight-value">${{ "{:,.2f}".format(result.get('Net Pay (Provincially specific deductions for damages)', 0)) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Past Lost Wages Section -->
-                <div class="calculation-section">
-                    <h3><i class="fas fa-history"></i> Past Lost Wages</h3>
-                    <table class="table table-striped">
-                        <tbody>
-                            <tr>
-                                <th><i class="fas fa-dollar-sign text-primary me-2"></i>Gross Missed Income</th>
-                                <td class="text-end">${{ "{:,.2f}".format(missed_pay) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-hand-holding-usd text-primary me-2"></i>Collateral Benefits</th>
-                                <td class="text-end">-${{ "{:,.2f}".format(collateral_benefits.get('Total Past Benefits', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Net Past Lost Wages</th>
-                                <td class="text-end">${{ "{:,.2f}".format(net_past_lost_wages) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-percentage text-primary me-2"></i>PJI Rate</th>
-                                <td class="text-end">{{ "{:.2f}".format(calculation_details.get('PJI Rate', 0)) }}%</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-plus-circle text-primary me-2"></i>Interest Amount</th>
-                                <td class="text-end">${{ "{:,.2f}".format(calculation_details.get('Interest Amount', 0)) }}</td>
-                            </tr>
-                            <tr class="total-row">
-                                <th><i class="fas fa-equals text-primary me-2"></i>Total with Interest</th>
-                                <td class="text-end highlight-value">${{ "{:,.2f}".format(net_past_lost_wages if net_past_lost_wages else calculation_details.get('Past Lost Wages with Interest', 0)) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Future Lost Wages Section -->
-                <div class="calculation-section">
-                    <h3><i class="fas fa-chart-line"></i> Future Lost Wages</h3>
-                    <table class="table table-striped">
-                        <tbody>
-                            <tr>
-                                <th><i class="fas fa-dollar-sign text-primary me-2"></i>Annual Gross Salary</th>
-                                <td class="text-end">${{ "{:,.2f}".format(result.get('Gross Income', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-hand-holding-usd text-primary me-2"></i>Annual Collateral Benefits</th>
-                                <td class="text-end">-${{ "{:,.2f}".format(collateral_benefits.get('Total Annual Future Benefits', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-file-invoice-dollar text-primary me-2"></i>Net Annual Salary</th>
-                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('annual_salary', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-calendar-alt text-primary me-2"></i>Time Period</th>
-                                <td>{{ "{:.2f}".format(present_value_details.get('time_horizon', 0)) }} years</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-percentage text-primary me-2"></i>Discount Rate</th>
-                                <td>{{ "{:.2f}".format(present_value_details.get('discount_rate', 0) * 100) }}%</td>
-                            </tr>
-                            <tr class="total-row">
-                                <th><i class="fas fa-equals text-primary me-2"></i>Present Value</th>
-                                <td class="text-end highlight-value">${{ "{:,.2f}".format(present_value_details.get('present_value', 0)) }}</td>
+                                <td>Net Income</td>
+                                <td class="text-end">${{ "{:,.2f}".format(result.get('Net Pay (Provincially specific deductions for damages)', 0)) }}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            
-            <!-- Right Column - Collateral Benefits -->
+
             <div class="col-md-6">
-                <!-- Collateral Benefits Summary Table -->
-                <div class="calculation-section">
-                    <h3><i class="fas fa-hand-holding-medical"></i> Collateral Benefits</h3>
-                    <table class="table table-striped table-sm">
-                        <tbody>
-                            <!-- Past Benefits Section -->
-                            <tr class="bg-light">
-                                <th colspan="2" class="text-primary"><i class="fas fa-history me-2"></i>Benefits Received to Date</th>
-                            </tr>
-                            {% if collateral_benefits is defined and 'EI Benefits (to date)' in collateral_benefits %}
+                <div class="card collateral-benefits">
+                    <h2>Collateral Benefits</h2>
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <th><i class="fas fa-briefcase text-primary me-2"></i>EI Benefits</th>
+                                <th>Past Benefits (To Date)</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>EI Benefits</td>
                                 <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('EI Benefits (to date)', 0)) }}</td>
                             </tr>
-                            {% if collateral_benefits.get('EI Remaining Days', 0) == 0 and collateral_benefits.get('EI Benefits (annual)', 0) > 0 %}
-                            <div class="alert alert-info mt-2 mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                EI sickness benefits have been adjusted to reflect the 26-week maximum eligibility period.
-                            </div>
-                            {% elif collateral_benefits.get('EI Remaining Days', None) is not none and collateral_benefits.get('EI Remaining Days', 182) < 182 %}
-                            <div class="alert alert-info mt-2 mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                EI sickness benefits have {{ collateral_benefits.get('EI Remaining Days') }} days remaining in their 26-week maximum eligibility period.
-                            </div>
-                            {% endif %}
                             <tr>
-                                <th><i class="fas fa-car-crash text-primary me-2"></i>Section B Benefits</th>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('Section B Benefits (to date)', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-heartbeat text-primary me-2"></i>LTD Benefits</th>
+                                <td>LTD Benefits</td>
                                 <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('LTD Benefits (to date)', 0)) }}</td>
                             </tr>
                             <tr>
-                                <th><i class="fas fa-hand-holding-heart text-primary me-2"></i>CPPD Benefits</th>
+                                <td>CPPD Benefits</td>
                                 <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('CPPD Benefits (to date)', 0)) }}</td>
                             </tr>
-                            <tr>
-                                <th><i class="fas fa-plus-circle text-primary me-2"></i>Other Benefits</th>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('Other Benefits (to date)', 0)) }}</td>
-                            </tr>
                             <tr class="total-row">
-                                <th><i class="fas fa-coins text-primary me-2"></i>Total Past Benefits</th>
-                                <td class="text-end highlight-value">${{ "{:,.2f}".format(collateral_benefits.get('Total Past Benefits', 0)) }}</td>
+                                <td>Total Past Benefits</td>
+                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('Total Past Benefits', 0)) }}</td>
                             </tr>
-                            {% endif %}
-                            
-                            <!-- Future Benefits Section -->
-                            <tr class="bg-light mt-3">
-                                <th colspan="2" class="text-primary"><i class="fas fa-calendar-alt me-2"></i>Annual Benefits Going Forward</th>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-briefcase text-primary me-2"></i>EI Benefits</th>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('EI Benefits (annual)', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-car-crash text-primary me-2"></i>Section B Benefits</th>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('Section B Benefits (annual)', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-heartbeat text-primary me-2"></i>LTD Benefits</th>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('LTD Benefits (annual)', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-hand-holding-heart text-primary me-2"></i>CPPD Benefits</th>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('CPPD Benefits (annual)', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-plus-circle text-primary me-2"></i>Other Benefits</th>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('Other Benefits (annual)', 0)) }}</td>
-                            </tr>
-                            <tr class="total-row">
-                                <th><i class="fas fa-coins text-primary me-2"></i>Total Annual Benefits</th>
-                                <td class="text-end highlight-value">${{ "{:,.2f}".format(collateral_benefits.get('Total Annual Future Benefits', 0)) }}</td>
-                            </tr>
-                            
-                            <!-- Future Total Benefits -->
-                            <tr>
-                                <th><i class="fas fa-calendar-check text-primary me-2"></i>Future Period</th>
-                                <td class="text-end">{{ "{:.2f}".format(present_value_details.get('time_horizon', 0)) }} years</td>
-                            </tr>
-                            <tr class="total-row bg-primary-light">
-                                <th><i class="fas fa-calculator text-primary me-2"></i>Total Future Benefits</th>
-                                <td class="text-end highlight-value">${{ "{:,.2f}".format(present_value_details.get('future_collateral_benefits', 0)) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Key Dates Section - Added to fill space -->
-                <div class="calculation-section">
-                    <h3><i class="fas fa-calendar-alt"></i> Key Dates & Information</h3>
-                    <table class="table table-striped">
-                        <tbody>
-                            <tr>
-                                <th><i class="fas fa-calendar-day text-primary me-2"></i>Loss Date</th>
-                                <td class="text-end">{{ loss_date.strftime("%Y-%m-%d") if loss_date is defined else calculation_details.get("Loss Date", "Not specified") }}</td>
-                            </tr>
-                            <tr>
-                                <th><i class="fas fa-calendar-alt text-primary me-2"></i>Current Date</th>
-                            <tr>
-                                <th><i class="fas fa-calendar-check text-primary me-2"></i>Tax Year Used</th>
-                                <td class="text-end">{{ tax_year }}</td>
-                            </tr>
-                                <td class="text-end">{{ current_date.strftime("%Y-%m-%d") if current_date is defined else calculation_details.get("Current Date", "Not specified") }}</td>
-                            <tr>
-                                <th><i class="fas fa-calendar-check text-primary me-2"></i>Tax Year Used</th>
-                                <td class="text-end">{{ tax_year }}</td>
-                            </tr>
-                            </tr>
-                            {% if present_value_details.get('time_horizon', 0) > 0 %}
-                            <tr>
-                                <th><i class="fas fa-hourglass-half text-primary me-2"></i>Loss Duration</th>
-                                <td class="text-end">{{ present_value_details.get('total_months', 0) }} months</td>
-                            </tr>
-                            {% endif %}
-                            {% if birthdate is defined and birthdate %}
-                            <tr>
-                                <th><i class="fas fa-birthday-cake text-primary me-2"></i>Date of Birth</th>
-                                <td class="text-end">{{ birthdate.strftime('%Y-%m-%d') }}</td>
-                            </tr>
-                            {% endif %}
-                            {% if retirement_age is defined and retirement_age %}
-                            <tr>
-                                <th><i class="fas fa-user-clock text-primary me-2"></i>Retirement Age</th>
-                                <td class="text-end">{{ retirement_age }} years</td>
-                            </tr>
-                            {% endif %}
-                            {% if missed_time and missed_time_unit %}
-                            <tr>
-                                <th><i class="fas fa-business-time text-primary me-2"></i>Time Missed</th>
-                                <td class="text-end">{{ missed_time }} {{ missed_time_unit }}</td>
-                            </tr>
-                            {% endif %}
-                            {% if collateral_benefits.get('EI Remaining Days') is defined %}
-                            <tr class="font-weight-bold bg-light">
-                                <th class="text-primary"><i class="fas fa-info-circle text-primary me-2"></i>EI Benefits Remaining</th>
-                                <td class="text-end highlight-value text-primary text-primary text-primary">{{ ei_days_remaining if ei_days_remaining is defined else collateral_benefits.get("EI Remaining Days", 0) }} days</td>
-                            </tr>
-                            {% endif %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        
-        <div class="d-flex justify-content-between mt-4">
-            <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-icon">
-                <i class="fas fa-arrow-left me-2"></i> New Calculation
-            </a>
-            {% if file_path %}
-            <a href="{{ url_for('download', filename=filename) }}" class="btn btn-primary btn-icon download-btn">
-                <i class="fas fa-download me-2"></i> Download Detailed Report
-            </a>
-            {% endif %}
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card past-lost-wages">
+                    <h2>Past Lost Wages</h2>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Gross Missed Income</td>
+                                <td class="text-end">${{ "{:,.2f}".format(missed_pay) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Collateral Benefits Deduction</td>
+                                <td class="text-end">-${{ "{:,.2f}".format(collateral_benefits.get('Total Past Benefits', 0)) }}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Net Past Lost Wages</td>
+                                <td class="text-end">${{ "{:,.2f}".format(net_past_lost_wages) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card future-lost-wages">
+                    <h2>Future Lost Wages</h2>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Annual Net Salary</td>
+                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('annual_salary', 0)) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Annual Collateral Benefits</td>
+                                <td class="text-end">-${{ "{:,.2f}".format(collateral_benefits.get('Total Annual Future Benefits', 0)) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Time Horizon</td>
+                                <td class="text-end">{{ "{:.2f} years".format(present_value_details.get('time_horizon', 0)) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Discount Rate</td>
+                                <td class="text-end">{{ "{:.2f}%".format(present_value_details.get('discount_rate', 0) * 100) }}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Present Value of Future Lost Wages</td>
+                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('present_value', 0)) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card pre-judgment-interest">
+                    <h2>Pre-Judgment Interest (PJI) Calculation</h2>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Base Amount</td>
+                                <td class="text-end">${{ "{:,.2f}".format(calculation_details.get('Base Amount', 0)) }}</td>
+                            </tr>
+                            <tr>
+                                <td>PJI Rate</td>
+                                <td class="text-end">{{ "{:.2f}%".format(calculation_details.get('PJI Rate', 0)) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Loss Date</td>
+                                <td class="text-end">{{ loss_date.strftime("%Y-%m-%d") if loss_date is defined else "Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Calculation Date</td>
+                                <td class="text-end">{{ current_date.strftime("%Y-%m-%d") if current_date is defined else "Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Years Between</td>
+                                <td class="text-end">{{ "{:.2f}".format(calculation_details.get('Years Between', 0)) }}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Pre-Judgment Interest Amount</td>
+                                <td class="text-end">${{ "{:,.2f}".format(calculation_details.get('Interest Amount', 0)) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card future-lost-wages-calc">
+                    <h2>Future Lost Wages Calculation</h2>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Calculation Method</td>
+                                <td class="text-end">Annuity Present Value</td>
+                            </tr>
+                            <tr>
+                                <td>Net Annual Income</td>
+                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('annual_salary', 0)) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Total Months</td>
+                                <td class="text-end">{{ present_value_details.get('total_months', 0) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Annual Discount Rate</td>
+                                <td class="text-end">{{ "{:.2f}%".format(present_value_details.get('discount_rate', 0) * 100) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Projected Monthly Payment</td>
+                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('annual_salary', 0) / 12) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Future Collateral Benefits</td>
+                                <td class="text-end">-${{ "{:,.2f}".format(present_value_details.get('future_collateral_benefits', 0)) }}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Total Present Value</td>
+                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('present_value', 0)) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Animated counter for total amount
-        animateCounter();
-        
-        // Create damages breakdown chart
-        createDamagesChart();
-        
-        // Create benefits timeline chart
-        createBenefitsTimelineChart();
-        
-        // Create income components chart 
-        createIncomeComponentsChart();
-        
-        // Add hover effect to file download
-        const downloadWrapper = document.querySelector('.download-file-wrapper');
-        if (downloadWrapper) {
-            downloadWrapper.addEventListener('mouseenter', function() {
-                const icon = this.querySelector('i.fa-file-pdf');
-                icon.classList.add('fa-bounce');
-                setTimeout(() => {
-                    icon.classList.remove('fa-bounce');
-                }, 1000);
-            });
-        }
-    });
-    
-    function animateCounter() {
-        const totalElement = document.querySelector('.total-amount');
-        if (!totalElement) return;
-        
-        const totalValue = parseFloat(totalElement.innerText.replace(/[$,]/g, ''));
-        
-        let startValue = 0;
-        const duration = 2000;
-        const startTime = performance.now();
-        
-        function updateCounter(currentTime) {
-            const elapsedTime = currentTime - startTime;
-            const progress = Math.min(elapsedTime / duration, 1);
-            
-            // Use easeOutExpo for smooth animation
-            const easedProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
-            
-            const currentValue = startValue + easedProgress * (totalValue - startValue);
-            totalElement.innerText = '$' + currentValue.toLocaleString('en-US', {
+document.addEventListener('DOMContentLoaded', function() {
+    const totalElement = document.querySelector('.damages-summary-table .total-row .text-end');
+    if (totalElement) {
+        const amount = parseFloat(totalElement.textContent.replace(/[,$]/g, ''));
+        animateCounter(totalElement, amount);
+    }
+
+    function animateCounter(element, finalValue, duration = 1500) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const currentValue = progress * finalValue;
+            element.textContent = '$' + currentValue.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
             
             if (progress < 1) {
-                requestAnimationFrame(updateCounter);
+                window.requestAnimationFrame(step);
             }
-        }
-        
-        requestAnimationFrame(updateCounter);
+        };
+        window.requestAnimationFrame(step);
     }
-    
-    function createDamagesChart() {
-        const ctx = document.getElementById('damagesChart');
-        if (!ctx) return;
-        console.log("Net past lost wages:", {{ net_past_lost_wages }});
-        
-        const pastLostWages = {{ net_past_lost_wages|float }};
-        const futureLostWages = {{ present_value_details.get("present_value", 0)|float }};
-        
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Past Lost Wages', 'Future Lost Wages'],
-                datasets: [{
-                    data: [pastLostWages, futureLostWages],
-                    backgroundColor: ['#377dff', '#2ecc71'],
-                    borderColor: '#1a2436',
-                    borderWidth: 2,
-                    hoverOffset: 15
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#e0e0e0',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.raw;
-                                const percentage = (value / (pastLostWages + futureLostWages) * 100).toFixed(1);
-                                return `$${value.toLocaleString('en-US', {maximumFractionDigits: 2})} (${percentage}%)`;
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    animateScale: true,
-                    animateRotate: true,
-                    duration: 2000,
-                    easing: 'easeOutQuart'
-                }
-            }
-        });
-    }
-    
-    function createBenefitsTimelineChart() {
-        const ctx = document.getElementById('benefitsTimelineChart');
-        if (!ctx) return;
-        
-        // Get key values for the chart
-        const timeHorizon = {{ present_value_details.get('time_horizon', 0) }};
-        const annualSalary = {{ present_value_details.get('annual_salary', 0) }};
-        const eiAnnual = {{ collateral_benefits.get('EI Benefits (annual)', 0) }};
-        const eiRemainingDays = {{ collateral_benefits.get('EI Remaining Days', 182) }};
-        const sectionBAnnual = {{ collateral_benefits.get('Section B Benefits (annual)', 0) }};
-        const ltdAnnual = {{ collateral_benefits.get('LTD Benefits (annual)', 0) }};
-        const cppdAnnual = {{ collateral_benefits.get('CPPD Benefits (annual)', 0) }};
-        const otherAnnual = {{ collateral_benefits.get('Other Benefits (annual)', 0) }};
-        
-        // Calculate how many years EI benefits will last (26 weeks = 0.5 years)
-        const eiYears = Math.min(timeHorizon, eiRemainingDays / 365);
-        
-        // Generate labels for each year in the time horizon
-        const labels = [];
-        for (let i = 0; i <= timeHorizon; i++) {
-            labels.push(`Year ${i}`);
-        }
-        
-        // Generate data points for each benefit type
-        const eiData = [];
-        const sectionBData = [];
-        const ltdData = [];
-        const cppdData = [];
-        const otherData = [];
-        const totalBenefitsData = [];
-        const netSalaryData = [];
-        
-        // For each year, calculate the benefits
-        for (let i = 0; i <= timeHorizon; i++) {
-            // EI benefits only apply for the remaining days (usually up to 0.5 years)
-            const eiValue = i < eiYears ? eiAnnual * ((eiYears - i) / eiYears) : 0;
-            eiData.push(eiValue);
-            
-            // Other benefits continue for the entire period
-            sectionBData.push(sectionBAnnual);
-            ltdData.push(ltdAnnual);
-            cppdData.push(cppdAnnual);
-            otherData.push(otherAnnual);
-            
-            // Total benefits for this year
-            const totalBenefits = eiValue + sectionBAnnual + ltdAnnual + cppdAnnual + otherAnnual;
-            totalBenefitsData.push(totalBenefits);
-            
-            // Net income after benefits
-            netSalaryData.push(annualSalary - totalBenefits);
-        }
-        
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'EI Benefits',
-                        data: eiData,
-                        borderColor: '#ff9f43',
-                        backgroundColor: 'rgba(255, 159, 67, 0.5)',
-                        tension: 0.2,
-                        fill: false,
-                        pointRadius: 4
-                    },
-                    {
-                        label: 'Section B',
-                        data: sectionBData,
-                        borderColor: '#0abde3',
-                        backgroundColor: 'rgba(10, 189, 227, 0.5)',
-                        tension: 0.2,
-                        fill: false,
-                        pointRadius: 3
-                    },
-                    {
-                        label: 'LTD Benefits',
-                        data: ltdData,
-                        borderColor: '#ee5253',
-                        backgroundColor: 'rgba(238, 82, 83, 0.5)',
-                        tension: 0.2,
-                        fill: false,
-                        pointRadius: 3
-                    },
-                    {
-                        label: 'CPPD Benefits',
-                        data: cppdData,
-                        borderColor: '#10ac84',
-                        backgroundColor: 'rgba(16, 172, 132, 0.5)',
-                        tension: 0.2,
-                        fill: false,
-                        pointRadius: 3
-                    },
-                    {
-                        label: 'Other Benefits',
-                        data: otherData,
-                        borderColor: '#a55eea',
-                        backgroundColor: 'rgba(165, 94, 234, 0.5)',
-                        tension: 0.2,
-                        fill: false,
-                        pointRadius: 3
-                    },
-                    {
-                        label: 'Total Benefits',
-                        data: totalBenefitsData,
-                        borderColor: '#2e86de',
-                        backgroundColor: 'rgba(46, 134, 222, 0.7)',
-                        tension: 0.2,
-                        fill: false,
-                        borderWidth: 3,
-                        pointRadius: 5
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#e0e0e0',
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Annual Amount ($)',
-                            color: '#e0e0e0'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#e0e0e0'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#e0e0e0',
-                            padding: 10
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': $' + context.raw.toLocaleString('en-US', {maximumFractionDigits: 2});
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    duration: 2000,
-                    easing: 'easeOutQuart'
-                }
-            }
-        });
-    }
-    
-    function createIncomeComponentsChart() {
-        const ctx = document.getElementById('incomeComponentsChart');
-        if (!ctx) return;
-        
-        // Get key values for the chart
-        const timeHorizon = {{ present_value_details.get('time_horizon', 0) }};
-        const grossIncome = {{ result.get('Gross Income', 0) }};
-        const netIncome = {{ result.get('Net Pay (Provincially specific deductions for damages)', 0) }};
-        const annualSalaryAfterBenefits = {{ present_value_details.get('annual_salary', 0) }};
-        const totalAnnualBenefits = {{ collateral_benefits.get('Total Annual Future Benefits', 0) }};
-        const eiRemainingDays = {{ collateral_benefits.get('EI Remaining Days', 182) }};
-        
-        // Calculate how many years EI benefits will last (26 weeks = 0.5 years)
-        const eiYears = Math.min(timeHorizon, eiRemainingDays / 365);
-        const eiAnnual = {{ collateral_benefits.get('EI Benefits (annual)', 0) }};
-        const otherBenefitsAnnual = totalAnnualBenefits - eiAnnual;
-        
-        // Generate labels for each year in the time horizon
-        const labels = [];
-        for (let i = 0; i <= timeHorizon; i++) {
-            labels.push(`Year ${i}`);
-        }
-        
-        // Data arrays
-        const grossIncomeData = [];
-        const taxesAndDeductionsData = [];
-        const netAfterTaxData = [];
-        const eiDeductionData = [];
-        const otherBenefitsData = [];
-        const netAfterAllDeductionsData = [];
-        
-        // Calculate taxes and deductions amount
-        const taxesAndDeductions = grossIncome - netIncome;
-        
-        // For each year, calculate the income components
-        for (let i = 0; i <= timeHorizon; i++) {
-            grossIncomeData.push(grossIncome);
-            taxesAndDeductionsData.push(taxesAndDeductions);
-            netAfterTaxData.push(netIncome);
-            
-            // EI benefits only apply for the remaining eligible period
-            const eiValue = i < eiYears ? eiAnnual * ((eiYears - i) / eiYears) : 0;
-            eiDeductionData.push(eiValue);
-            
-            // Other benefits continue for the entire period
-            otherBenefitsData.push(otherBenefitsAnnual);
-            
-            // Net income after all deductions
-            const yearlyBenefits = eiValue + otherBenefitsAnnual;
-            netAfterAllDeductionsData.push(netIncome - yearlyBenefits);
-        }
-        
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Gross Income',
-                        data: grossIncomeData,
-                        borderColor: '#f7b731',
-                        backgroundColor: 'rgba(247, 183, 49, 0.2)',
-                        borderWidth: 3,
-                        tension: 0.1,
-                        fill: false,
-                        pointRadius: 4
-                    },
-                    {
-                        label: 'Net Income After Tax',
-                        data: netAfterTaxData,
-                        borderColor: '#26de81',
-                        backgroundColor: 'rgba(38, 222, 129, 0.2)',
-                        borderWidth: 3,
-                        tension: 0.1,
-                        fill: false,
-                        pointRadius: 4
-                    },
-                    {
-                        label: 'Net Income After All Deductions',
-                        data: netAfterAllDeductionsData,
-                        borderColor: '#2e86de',
-                        backgroundColor: 'rgba(46, 134, 222, 0.9)',
-                        borderWidth: 4,
-                        tension: 0.1,
-                        fill: false,
-                        pointRadius: 5
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#e0e0e0',
-                            callback: function(value) {
-                                return '$' + value.toLocaleString();
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Annual Amount ($)',
-                            color: '#e0e0e0'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#e0e0e0'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#e0e0e0',
-                            padding: 10,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': $' + context.raw.toLocaleString('en-US', {maximumFractionDigits: 2});
-                            }
-                        }
-                    }
-                },
-                animation: {
-                    duration: 2000,
-                    easing: 'easeOutQuart'
-                }
-            }
-        });
-    }
+});
 </script>
 {% endblock %}
