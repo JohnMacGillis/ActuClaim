@@ -1,3 +1,4 @@
+from flask import send_from_directory, send_file
 from flask import Flask, render_template, request, redirect, url_for, send_file, make_response, jsonify, session, flash
 import os
 import datetime
@@ -388,9 +389,26 @@ def calculate():
 @app.route('/download/<filename>')
 def download(filename):
     try:
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+        # Construct the full file path
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Check if the file exists
+        if not os.path.exists(file_path):
+            flash('The requested file does not exist.', 'error')
+            return redirect(url_for('index'))
+        
+        # Attempt to send the file
+        return send_file(
+            file_path, 
+            as_attachment=True, 
+            download_name=filename
+        )
     except Exception as e:
-        flash(f"Error downloading file: {str(e)}")
+        # Log the error for debugging
+        print(f"Error downloading file {filename}: {str(e)}")
+        
+        # Flash a user-friendly error message
+        flash('An error occurred while downloading the report. Please try again.', 'error')
         return redirect(url_for('index'))
 
 app.register_blueprint(pji_routes)
