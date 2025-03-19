@@ -88,6 +88,23 @@
                                     <option value="newfoundland">Newfoundland</option>
                                     <option value="new brunswick">New Brunswick</option>
                                     <option value="prince edward island">Prince Edward Island</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="taxYear" class="form-label">Tax Year</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                    <select class="form-select" id="taxYear" name="tax_year">
+                        {% for year in available_tax_years %}
+                            <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
                                 </select>
                             </div>
                             <small class="form-text text-muted">

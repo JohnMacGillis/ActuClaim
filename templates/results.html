@@ -322,7 +322,15 @@
                             </tr>
                             <tr>
                                 <th><i class="fas fa-calendar-alt text-primary me-2"></i>Current Date</th>
+                            <tr>
+                                <th><i class="fas fa-calendar-check text-primary me-2"></i>Tax Year Used</th>
+                                <td class="text-end">{{ tax_year }}</td>
+                            </tr>
                                 <td class="text-end">{{ current_date.strftime("%Y-%m-%d") if current_date is defined else calculation_details.get("Current Date", "Not specified") }}</td>
+                            <tr>
+                                <th><i class="fas fa-calendar-check text-primary me-2"></i>Tax Year Used</th>
+                                <td class="text-end">{{ tax_year }}</td>
+                            </tr>
                             </tr>
                             {% if present_value_details.get('time_horizon', 0) > 0 %}
                             <tr>
