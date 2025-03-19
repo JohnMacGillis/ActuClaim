@@ -1,6 +1,42 @@
+# Python cache files
 __pycache__/
 *.py[cod]
+*.class
+
+# Backup and temporary files
 *.bak
 *.backup
+*.tmp
+*.swp
+
+# Log and debug files
 *.log
+*.debug
+
+# Temporary HTML and document files
+*.html.backup*
+*.html.bak*
+bankofcanada_*.html
+
+# Keep only the most recent backups
+app.py.bak_fresh
+index.html.final_backup
+
+# Ignore generated documents
+documents/*.pdf
+
+# Ignore test and temporary documents
+*.docx
+*.txt
+
+# Virtual environment
 venv/
+
+# Ignore zip files
+*.zip
+
+# IDE and OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
