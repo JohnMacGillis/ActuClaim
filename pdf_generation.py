@@ -12,7 +12,7 @@ import datetime
 
 def create_enhanced_pdf_report(client_name, province, calculation_details, present_value_details, 
                              result, collateral_benefits, missed_time_unit, missed_time, output_path, 
-                             birthdate=None, retirement_age=None):
+                             birthdate=None, retirement_age=None, **kwargs):
     """
     Create a professionally-styled PDF report with comprehensive details organized in distinct sections.
     
