@@ -62,23 +62,25 @@
                                 <input type="text" class="form-control" id="client_name" name="client_name" placeholder="Enter client's full name" required>
                             </div>
                         </div>
-                <div class="col-md-6">
-                    <div class="form-group mb-4">
-                        <label for="dependents" class="form-label">Number of Dependents (under 18)</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-child"></i></span>
-                            <input type="number" class="form-control" id="dependents" name="dependents" min="0" value="0">
-                        </div>
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Dependents under 18 qualify for benefits ($2,616 per child, up to $8,375)
-                        </small>
-                    </div>
-                </div>
-
                     </div>
                     
                     <div class="col-md-6">
                         <div class="form-group mb-4">
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group mb-4">
+                        <label for="num_dependents" class="form-label">Number of Dependents (under 18)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-child"></i></span>
+                            <input type="number" class="form-control" id="num_dependents" name="num_dependents" placeholder="Number of dependents under 18" value="0" min="0" max="10">
+                        </div>
+                        <small class="form-text text-muted">Each dependent provides a $2,616 deduction (max $8,375)</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
                             <label for="province" class="form-label required-field">Province</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>

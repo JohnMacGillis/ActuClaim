@@ -315,6 +315,7 @@ def create_enhanced_pdf_report(client_name, province, calculation_details, prese
         ["Date of Birth:", birthdate.strftime("%Y-%m-%d") if birthdate else "Not specified"],
         ["Retirement Age:", str(retirement_age) if retirement_age else "Not specified"],
         ["Time Missed:", f"{missed_time} {missed_time_unit}"],
+        ["Dependents (under 18):", str(calculation_details.get("Dependents", 0))],
         ["Discount Rate:", f"{present_value_details.get('discount_rate', 0)*100:.2f}%"],
         ["Prejudgment Interest:", f"{calculation_details.get('PJI Rate', 0):.2f}%"]
     ]

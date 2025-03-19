@@ -3,19 +3,23 @@
 # =============================================================================
 import datetime
 
-def calculate_take_home(income, province, working_days, hours_per_day, is_hourly=False, hours_per_week=None):
+def calculate_take_home(income, province, working_days, hours_per_day, is_hourly=False, hours_per_week=None, dependents=0):
     """Calculate take-home pay after taxes and deductions."""
     # Import necessary functions from tax_calculations.py
     from tax_calculations import (
         calculate_federal_tax,
         calculate_provincial_tax,
         calculate_cpp_contributions,
-        calculate_ei_contribution
+        calculate_ei_contribution,
+        calculate_dependent_benefit
     )
     
+    # Calculate dependent benefit
+    dependent_benefit = calculate_dependent_benefit(dependents)
+    
     # Calculate taxes and deductions
-    federal_tax = calculate_federal_tax(income)
-    provincial_tax = calculate_provincial_tax(income, province)
+    federal_tax = calculate_federal_tax(income, dependents)
+    provincial_tax = calculate_provincial_tax(income, province, dependents)
     cpp_contribution, cpp2_contribution = calculate_cpp_contributions(income)
     ei_contribution = calculate_ei_contribution(income)
 
@@ -49,6 +53,7 @@ def calculate_take_home(income, province, working_days, hours_per_day, is_hourly
         "CPP Contribution": cpp_contribution,
         "CPP2 Contribution": cpp2_contribution,
         "EI Contribution": ei_contribution,
+        "Dependent Benefit": dependent_benefit,
         "Total Deductions": round(total_deductions, 2),
         "Net Pay (Provincially specific deductions for damages)": round(take_home_pay, 2),
         "Daily Net Pay": round(daily_net_pay, 2),

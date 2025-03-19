@@ -2,20 +2,6 @@
 
 {% block title %}Economic Damages Calculator{% endblock %}
 
-{% block additional_styles %}
-    <style>
-        /* Ensure conditional fields are hidden by default */
-        .conditional-field {
-            display: none;
-        }
-        
-        /* Show conditional fields when they have the visible class */
-        .conditional-field.visible {
-            display: block;
-        }
-    </style>
-{% endblock %}
-
 {% block content %}
 <div class="card">
     <div class="card-header bg-primary">
@@ -62,19 +48,6 @@
                                 <input type="text" class="form-control" id="client_name" name="client_name" placeholder="Enter client's full name" required>
                             </div>
                         </div>
-                <div class="col-md-6">
-                    <div class="form-group mb-4">
-                        <label for="dependents" class="form-label">Number of Dependents (under 18)</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-child"></i></span>
-                            <input type="number" class="form-control" id="dependents" name="dependents" min="0" value="0">
-                        </div>
-                        <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Dependents under 18 qualify for benefits ($2,616 per child, up to $8,375)
-                        </small>
-                    </div>
-                </div>
-
                     </div>
                     
                     <div class="col-md-6">
@@ -190,137 +163,139 @@
             </div>
             
             <!-- Collateral Benefits Section -->
-            <div class="section-card">
-                <h3 class="section-title"><i class="fas fa-hand-holding-usd"></i> Collateral Benefits</h3>
-                
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <h5 class="text-primary">Benefits Received to Date</h5>
-                        <p class="text-muted mb-3">
-                            <i class="fas fa-info-circle"></i> Enter the <strong>total amount received to date</strong> for each benefit category since the date of loss
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="ei_benefits_to_date" class="form-label">EI Benefits (to date)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="ei_benefits_to_date" name="ei_benefits_to_date" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="section_b_to_date" class="form-label">Section B Benefits (to date)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="section_b_to_date" name="section_b_to_date" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="ltd_benefits_to_date" class="form-label">LTD Benefits (to date)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="ltd_benefits_to_date" name="ltd_benefits_to_date" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="cppd_benefits_to_date" class="form-label">CPPD Benefits (to date)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="cppd_benefits_to_date" name="cppd_benefits_to_date" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="other_benefits_to_date" class="form-label">Other Benefits (to date)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="other_benefits_to_date" name="other_benefits_to_date" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mt-4">
-                    <div class="col-md-12 mb-3">
-                        <h5 class="text-primary">Annual Benefits Going Forward</h5>
-                        <p class="text-muted mb-3">
-                            <i class="fas fa-info-circle"></i> Enter the <strong>annual amount</strong> for each benefit category going forward
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="ei_benefits_annual" class="form-label">EI Benefits (annual)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="ei_benefits_annual" name="ei_benefits_annual" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="ei_benefits_start_date" class="form-label">EI Benefits Start Date</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                                <input type="date" class="form-control" id="ei_benefits_start_date" name="ei_benefits_start_date">
-                            </div>
-                            <small class="form-text text-muted">
-                                <i class="fas fa-info-circle"></i> EI sickness benefits are limited to 26 weeks maximum.
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="section_b_annual" class="form-label">Section B Benefits (annual)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="section_b_annual" name="section_b_annual" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="ltd_benefits_annual" class="form-label">LTD Benefits (annual)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="ltd_benefits_annual" name="ltd_benefits_annual" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="cppd_benefits_annual" class="form-label">CPPD Benefits (annual)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="cppd_benefits_annual" name="cppd_benefits_annual" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="other_benefits_annual" class="form-label">Other Benefits (annual)</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
-                                <input type="number" class="form-control" id="other_benefits_annual" name="other_benefits_annual" min="0" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
+<div class="section-card">
+    <h3 class="section-title"><i class="fas fa-hand-holding-usd"></i> Collateral Benefits</h3>
+    
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <h5 class="text-primary">Benefits Received to Date</h5>
+            <p class="text-muted mb-3">
+                <i class="fas fa-info-circle"></i> Enter the <strong>total amount received to date</strong> for each benefit category since the date of loss
+            </p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="ei_benefits_to_date" class="form-label">EI Benefits (to date)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="ei_benefits_to_date" name="ei_benefits_to_date" min="0" step="0.01" value="0">
                 </div>
             </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="section_b_to_date" class="form-label">Section B Benefits (to date)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="section_b_to_date" name="section_b_to_date" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="ltd_benefits_to_date" class="form-label">LTD Benefits (to date)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="ltd_benefits_to_date" name="ltd_benefits_to_date" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="cppd_benefits_to_date" class="form-label">CPPD Benefits (to date)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="cppd_benefits_to_date" name="cppd_benefits_to_date" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="other_benefits_to_date" class="form-label">Other Benefits (to date)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="other_benefits_to_date" name="other_benefits_to_date" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-12 mb-3">
+            <h5 class="text-primary">Annual Benefits Going Forward</h5>
+            <p class="text-muted mb-3">
+                <i class="fas fa-info-circle"></i> Enter the <strong>annual amount</strong> for each benefit category going forward
+            </p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="ei_benefits_annual" class="form-label">EI Benefits (annual)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="ei_benefits_annual" name="ei_benefits_annual" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+        <!-- Add this inside your Collateral Benefits section in index.html after the EI Benefits (annual) field -->
+<!-- Find the EI Benefits annual input and add this right afterward -->
+
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="ei_benefits_start_date" class="form-label">EI Benefits Start Date</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                    <input type="date" class="form-control" id="ei_benefits_start_date" name="ei_benefits_start_date">
+                </div>
+                <small class="form-text text-muted">
+                    <i class="fas fa-info-circle"></i> EI sickness benefits are limited to 26 weeks maximum.
+                </small>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="section_b_annual" class="form-label">Section B Benefits (annual)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="section_b_annual" name="section_b_annual" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="ltd_benefits_annual" class="form-label">LTD Benefits (annual)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="ltd_benefits_annual" name="ltd_benefits_annual" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="cppd_benefits_annual" class="form-label">CPPD Benefits (annual)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="cppd_benefits_annual" name="cppd_benefits_annual" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group mb-4">
+                <label for="other_benefits_annual" class="form-label">Other Benefits (annual)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                    <input type="number" class="form-control" id="other_benefits_annual" name="other_benefits_annual" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             
             <!-- Missed Time Section -->
             <div class="section-card">
@@ -364,6 +339,25 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
                                 <input type="date" class="form-control" id="loss_date" name="loss_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                           <label class="form-label">PJI Rate Calculation</label>
+			   <div class="form-control bg-light">
+   				 <i class="fas fa-info-circle text-primary me-2"></i>
+   				 Automatically calculated using T-Bill rates from the date of loss to the calculation date
+    				<input type="hidden" id="pji_rate" name="pji_rate" value="">
+			   </div>
+			     <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-percent"></i></span>
+<label class="form-label">PJI Rate Calculation</label>
+<div class="form-control bg-light">
+    <i class="fas fa-info-circle text-primary me-2"></i>
+    Automatically calculated using T-Bill rates from the date of loss to the calculation date
+    <input type="hidden" id="pji_rate" name="pji_rate" value="">
+</div>
                             </div>
                         </div>
                     </div>
@@ -429,6 +423,7 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="form-group mb-4">
                     <label for="discount_rate" class="form-label required-field">
                         Annual Discount Rate (%)
@@ -440,25 +435,15 @@
                         <span class="input-group-text"><i class="fas fa-percentage"></i></span>
                         <input type="number" class="form-control" id="discount_rate" name="discount_rate" min="0" max="10" step="0.1" value="2.5" required>
                     </div>
-               </div>
-
-              <!-- PJI Rate Field -->
-              <div class="form-group mb-4 mt-4">
-                  <label for="pji_rate_display" class="form-label">
-                      Pre-Judgment Interest Rate (%)
-                      <i class="fas fa-info-circle text-primary ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
-                          title="Automatically calculated using T-Bill rates from the date of loss to the calculation date"></i>
-                  </label>
-                  <div class="input-group">
-                      <span class="input-group-text">
-                          <i class="fas fa-percentage"></i>
-                      </span>
-                      <input type="text" class="form-control bg-dark text-light" id="pji_rate_display" 
-                          readonly value="Auto-calculated" style="opacity: 0.7;">
-                      <input type="hidden" id="pji_rate" name="pji_rate" value="">
-                   </div>
-               </div>
-		                
+                    <div class="range-slider">
+                        <input type="range" class="range-slider-input" id="discount_rate_slider" min="0" max="10" step="0.1" value="2.5">
+                        <div class="range-slider-labels">
+                            <span>0%</span>
+                            <span>5%</span>
+                            <span>10%</span>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Hidden field to always use the proposal document type -->
                 <input type="hidden" name="doc_type" value="2">
@@ -596,7 +581,6 @@
         const disabilityFields = document.querySelector('.disability-fields');
         
         returnStatus.addEventListener('change', function() {
-            console.log("Return status changed to:", this.value);
             if (this.value === 'returning to work') {
                 returnWorkField.classList.add('visible');
                 disabilityFields.classList.remove('visible');
@@ -608,7 +592,6 @@
                 
                 checkSectionCompletion();
             } else if (this.value === 'total disability') {
-                console.log("Showing disability fields");
                 returnWorkField.classList.remove('visible');
                 disabilityFields.classList.add('visible');
                 // Make disability fields required
@@ -626,6 +609,18 @@
                 document.getElementById('birthdate').required = false;
                 document.getElementById('retirement_age').required = false;
             }
+        });
+        
+        // Handle discount rate slider
+        const discountRateInput = document.getElementById('discount_rate');
+        const discountRateSlider = document.getElementById('discount_rate_slider');
+        
+        discountRateSlider.addEventListener('input', function() {
+            discountRateInput.value = this.value;
+        });
+        
+        discountRateInput.addEventListener('input', function() {
+            discountRateSlider.value = this.value;
         });
         
         // Handle vacation pay toggle
@@ -665,207 +660,77 @@
                 return false;
             }
         });
-        
-        // Update PJI rate when loss date changes
-        const lossDateInput = document.getElementById('loss_date');
-        if (lossDateInput) {
-            lossDateInput.addEventListener('change', function() {
-                // Update PJI rate when loss date changes
-                updatePJIRate(this.value);
-            });
-            
-            // Also call on page load to initialize with default date
-            if (lossDateInput.value) {
-                setTimeout(() => updatePJIRate(lossDateInput.value), 100); // Delay slightly to ensure DOM is ready
-            }
-        }
+    });
 
-        // Function to update PJI rate
-        function updatePJIRate(lossDate) {
-            if (!lossDate) return;
-            
-            const pjiDisplay = document.getElementById('pji_rate_display');
-            const pjiInput = document.getElementById('pji_rate');
-            
-            // Set to calculating status
-            if (pjiDisplay) pjiDisplay.value = "Calculating...";
-            
-            // Get the current date for end date
-            const today = new Date().toISOString().split('T')[0];
-            
-            // Make API request to get PJI rate
-            fetch(`/api/pji-rate?start_date=${encodeURIComponent(lossDate)}&end_date=${encodeURIComponent(today)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Update display and hidden input with the rate
-                    if (data && data.rate !== undefined) {
-                        if (pjiDisplay) pjiDisplay.value = data.rate.toFixed(2) + '%';
-                        if (pjiInput) pjiInput.value = data.rate;
-                    } else if (data && data.error) {
-                        if (pjiDisplay) pjiDisplay.value = "Error: " + data.error;
-                    } else {
-                        if (pjiDisplay) pjiDisplay.value = "2.50%"; // Fallback default
-                        if (pjiInput) pjiInput.value = 2.5;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching PJI rate:', error);
-                    // Set fallback value on error
-                    if (pjiDisplay) pjiDisplay.value = "2.50%"; // Default value
-                    if (pjiInput) pjiInput.value = 2.5;
-                });
-        }
+    // Add this to your existing script
+function initStickyProgressBar() {
+    const progressBar = document.getElementById('progressBar');
+    if (!progressBar) return;
+    
+    // Create a wrapper div to maintain layout space when bar becomes fixed
+    const wrapper = document.createElement('div');
+    wrapper.className = 'sticky-progress-container';
+    progressBar.parentNode.insertBefore(wrapper, progressBar);
+    wrapper.appendChild(progressBar);
+    
+    // Clone the progress bar for the sticky version
+    const stickyBar = progressBar.cloneNode(true);
+    stickyBar.id = 'stickyProgressBar';
+    stickyBar.classList.add('sticky');
+    document.body.appendChild(stickyBar);
+    
+    // Sync the active states between the two progress bars
+    function syncProgressBars() {
+        const activeStep = progressBar.querySelector('.progress-step.active');
+        const completedSteps = progressBar.querySelectorAll('.progress-step.completed');
         
-        function initStickyProgressBar() {
-            const progressBar = document.getElementById('progressBar');
-            if (!progressBar) return;
+        if (activeStep) {
+            const activeIndex = activeStep.dataset.step;
+            const stickyActiveStep = stickyBar.querySelector(`.progress-step[data-step="${activeIndex}"]`);
+            stickyBar.querySelectorAll('.progress-step').forEach(step => step.classList.remove('active', 'completed'));
             
-            // Create a wrapper div to maintain layout space when bar becomes fixed
-            const wrapper = document.createElement('div');
-            wrapper.className = 'sticky-progress-container';
-            progressBar.parentNode.insertBefore(wrapper, progressBar);
-            wrapper.appendChild(progressBar);
-            
-            // Clone the progress bar for the sticky version
-            const stickyBar = progressBar.cloneNode(true);
-            stickyBar.id = 'stickyProgressBar';
-            stickyBar.classList.add('sticky');
-            document.body.appendChild(stickyBar);
-            
-            // Sync the active states between the two progress bars
-            function syncProgressBars() {
-                const activeStep = progressBar.querySelector('.progress-step.active');
-                const completedSteps = progressBar.querySelectorAll('.progress-step.completed');
+            if (stickyActiveStep) {
+                stickyActiveStep.classList.add('active');
                 
-                if (activeStep) {
-                    const activeIndex = activeStep.dataset.step;
-                    const stickyActiveStep = stickyBar.querySelector(`.progress-step[data-step="${activeIndex}"]`);
-                    stickyBar.querySelectorAll('.progress-step').forEach(step => step.classList.remove('active', 'completed'));
-                    
-                    if (stickyActiveStep) {
-                        stickyActiveStep.classList.add('active');
-                        
-                        // Add completed class to previous steps
-                        stickyBar.querySelectorAll('.progress-step').forEach(step => {
-                            if (parseInt(step.dataset.step) < parseInt(activeIndex)) {
-                                step.classList.add('completed');
-                            }
-                        });
+                // Add completed class to previous steps
+                stickyBar.querySelectorAll('.progress-step').forEach(step => {
+                    if (parseInt(step.dataset.step) < parseInt(activeIndex)) {
+                        step.classList.add('completed');
                     }
-                    
-                    // Set progress width
-                    const progressWidth = ((parseInt(activeIndex) - 1) / (progressBar.querySelectorAll('.progress-step').length - 1)) * 100;
-                    stickyBar.style.setProperty('--progress-width', progressWidth + '%');
-                }
-            }
-            
-            // Check scroll position and show/hide sticky bar
-            function checkScrollPosition() {
-                const wrapperRect = wrapper.getBoundingClientRect();
-                const isOffScreen = wrapperRect.bottom < 0;
-                
-                if (isOffScreen) {
-                    stickyBar.classList.add('visible');
-                } else {
-                    stickyBar.classList.remove('visible');
-                }
-            }
-            
-            // Initialize and add event listeners
-            window.addEventListener('scroll', checkScrollPosition);
-            
-            // Watch for changes to the original progress bar
-            const observer = new MutationObserver(syncProgressBars);
-            observer.observe(progressBar, { attributes: true, childList: true, subtree: true });
-            
-            // Initial sync
-            syncProgressBars();
-        }
-        
-        initStickyProgressBar();
-    });
-     document.addEventListener('DOMContentLoaded', function() {
-        // (Your existing JavaScript code)
-        
-        // Add the new T-Bill rate calculation code here:
-        // Get references to the relevant form elements
-        const lossDateInput = document.getElementById('loss_date');
-        const calculationDateInput = document.getElementById('start_date'); // Using start_date as calculation date
-        const pjiRateDisplay = document.getElementById('pji_rate_display');
-        const pjiRateInput = document.getElementById('pji_rate');
-        
-        // Function to update PJI rate based on selected dates
-        function updatePJIRate() {
-            // Only proceed if both dates are valid
-            if (!lossDateInput.value || !calculationDateInput.value) {
-                return;
-            }
-            
-            // Show loading indicator
-            pjiRateDisplay.value = "Calculating...";
-            
-            // Make API call to get T-Bill rate
-            fetch(`/api/tbill-rate?start_date=${lossDateInput.value}&end_date=${calculationDateInput.value}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        console.error("Error fetching T-Bill rate:", data.error);
-                        pjiRateDisplay.value = "Error: Could not calculate";
-                        pjiRateInput.value = "2.5"; // Default fallback
-                    } else {
-                        // Update display and hidden input with the rate
-                        const rate = data.rate;
-                        pjiRateDisplay.value = `${rate}%`;
-                        pjiRateInput.value = rate;
-                        console.log(`Updated PJI rate to ${rate}%`);
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching T-Bill rate:", error);
-                    pjiRateDisplay.value = "Error: Could not calculate";
-                    pjiRateInput.value = "2.5"; // Default fallback
                 });
-        }
-        
-        // Add event listeners to update PJI rate when dates change
-        if (lossDateInput && calculationDateInput) {
-            lossDateInput.addEventListener('change', updatePJIRate);
-            calculationDateInput.addEventListener('change', updatePJIRate);
+            }
             
-            // Also update when the page loads if dates are already set
-            if (lossDateInput.value && calculationDateInput.value) {
-                updatePJIRate();
-            }
+            // Set progress width
+            const progressWidth = ((parseInt(activeIndex) - 1) / (progressBar.querySelectorAll('.progress-step').length - 1)) * 100;
+            stickyBar.style.setProperty('--progress-width', progressWidth + '%');
         }
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-        const provinceSelect = document.getElementById('province');
-        const discountRateInput = document.getElementById('discount_rate');
+    }
     
-        // Set initial discount rate if province is already selected
-        updateDiscountRateForProvince();
-    
-        // Add event listener for province changes
-        provinceSelect.addEventListener('change', updateDiscountRateForProvince);
-    
-        function updateDiscountRateForProvince() {
-            const province = provinceSelect.value.toLowerCase();
+    // Check scroll position and show/hide sticky bar
+    function checkScrollPosition() {
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const isOffScreen = wrapperRect.bottom < 0;
         
-            if (province === "nova scotia") {
-                discountRateInput.value = "3.5";
-            } else if (province === "prince edward island" || 
-                  province === "newfoundland" || 
-                  province === "newfoundland and labrador" || 
-                  province === "new brunswick") {
-                discountRateInput.value = "2.5";
-            }
+        if (isOffScreen) {
+            stickyBar.classList.add('visible');
+        } else {
+            stickyBar.classList.remove('visible');
         }
-});
+    }
+    
+    // Initialize and add event listeners
+    window.addEventListener('scroll', checkScrollPosition);
+    
+    // Watch for changes to the original progress bar
+    const observer = new MutationObserver(syncProgressBars);
+    observer.observe(progressBar, { attributes: true, childList: true, subtree: true });
+    
+    // Initial sync
+    syncProgressBars();
+}
+
+// Add this to your document.addEventListener('DOMContentLoaded', function() { ... }) block
+// at the end of that function
+initStickyProgressBar();
 </script>
 {% endblock %}
-
