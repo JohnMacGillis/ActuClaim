@@ -1,0 +1,201 @@
+/* Updated Results Page Styling */
+:root {
+    --primary-color: #2196F3;
+    --secondary-color: #757575;
+    --background-light: #f4f4f4;
+    --text-color: #333;
+    --border-color: #e0e0e0;
+}
+
+.results-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+}
+
+.results-header {
+    margin-bottom: 2.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 1.5rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.results-header h1 {
+    color: var(--text-color);
+    font-weight: 300;
+    margin: 0;
+}
+
+.download-section .download-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.download-section .download-btn i {
+    margin-right: 0.5rem;
+}
+
+.damages-summary-card {
+    margin-bottom: 2.5rem;
+    background-color: var(--background-light);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.damages-summary-table {
+    width: 100%;
+}
+
+.damages-summary-table td {
+    padding: 1rem;
+    font-size: 1.1rem;
+}
+
+.damages-summary-table .total-row {
+    font-weight: 600;
+    background-color: rgba(33, 150, 243, 0.05);
+}
+
+.calculation-section {
+    margin-top: 2.5rem;
+}
+
+.card {
+    background-color: var(--background-light);
+    border-radius: 8px;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding-bottom: 0.5rem;
+}
+
+.card h2 {
+    color: var(--text-color);
+    font-size: 1.2rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1rem 1.5rem;
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    border-top: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 1rem;
+}
+
+.table .total-row {
+    font-weight: 600;
+    background-color: rgba(33, 150, 243, 0.05);
+}
+
+.table .total-row td {
+    border-bottom: none;
+}
+
+.text-end {
+    text-align: right !important;
+    color: var(--primary-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .results-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .download-section {
+        margin-top: 1rem;
+    }
+
+    .card h2 {
+        text-align: center;
+    }
+
+    .table td {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Subtle Animations */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.card {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background-color: white;
+    }
+
+    .results-container {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .download-section {
+        display: none;
+    }
+}
+.card {
+    padding: 2rem !important;
+    margin-bottom: 3rem !important;
+}
+
+.table td {
+    padding: 1.25rem 1.5rem !important;
+}
+
+.calculation-section {
+    gap: 3rem !important;
+}
+
+.row {
+    margin-bottom: 3rem !important;
+}
+
+.card h2 {
+    margin-bottom: 1.5rem !important;
+    padding-bottom: 1rem !important;
+}
+
+.damages-summary-card {
+    padding: 2.5rem !important;
+    margin-bottom: 3rem !important;
+}
