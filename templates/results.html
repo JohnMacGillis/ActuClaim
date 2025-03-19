@@ -318,11 +318,11 @@
                         <tbody>
                             <tr>
                                 <th><i class="fas fa-calendar-day text-primary me-2"></i>Loss Date</th>
-                                <td class="text-end">{{ calculation_details.get('Loss Date', 'Not specified') }}</td>
+                                <td class="text-end">{{ loss_date.strftime("%Y-%m-%d") if loss_date is defined else calculation_details.get("Loss Date", "Not specified") }}</td>
                             </tr>
                             <tr>
                                 <th><i class="fas fa-calendar-alt text-primary me-2"></i>Current Date</th>
-                                <td class="text-end">{{ calculation_details.get('Current Date', 'Not specified') }}</td>
+                                <td class="text-end">{{ current_date.strftime("%Y-%m-%d") if current_date is defined else calculation_details.get("Current Date", "Not specified") }}</td>
                             </tr>
                             {% if present_value_details.get('time_horizon', 0) > 0 %}
                             <tr>
@@ -351,7 +351,7 @@
                             {% if collateral_benefits.get('EI Remaining Days') is defined %}
                             <tr class="font-weight-bold bg-light">
                                 <th class="text-primary"><i class="fas fa-info-circle text-primary me-2"></i>EI Benefits Remaining</th>
-                                <td class="text-end highlight-value text-primary text-primary text-primary">{{ collateral_benefits.get('EI Remaining Days', 0) }} days</td>
+                                <td class="text-end highlight-value text-primary text-primary text-primary">{{ ei_days_remaining if ei_days_remaining is defined else collateral_benefits.get("EI Remaining Days", 0) }} days</td>
                             </tr>
                             {% endif %}
                         </tbody>
