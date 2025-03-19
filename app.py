@@ -29,7 +29,7 @@ def inject_app_name():
 
 @app.route('/')
 def index():
-    return render_template('index.html', title='ActuClaim - Economic Damages Calculator')
+    return render_template("index.html", title="ActuClaim - Economic Damages Calculator", available_tax_years=get_available_tax_years(), current_year=datetime.datetime.now().year)
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
