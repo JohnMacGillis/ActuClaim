@@ -43,33 +43,39 @@
     <div class="calculation-section">
         <div class="row">
             <div class="col-md-6">
-                <div class="card income-summary">
-                    <h2>Income Summary</h2>
-                    <table class="table">
-                        <tbody>
-                            <tr>
-                                <td>Gross Income</td>
-                                <td class="text-end">${{ "{:,.2f}".format(result.get("Gross Income", 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <td>Federal Tax</td>
-                                <td class="text-end">-${{ "{:,.2f}".format(result.get('Federal Tax', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <td>Provincial Tax</td>
-                                <td class="text-end">-${{ "{:,.2f}".format(result.get('Provincial Tax', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <td>CPP/EI Contributions</td>
-                                <td class="text-end">-${{ "{:,.2f}".format(result.get('CPP Contribution', 0) + result.get('EI Contribution', 0)) }}</td>
-                            </tr>
-                            <tr class="total-row">
-                                <td>Net Income</td>
-                                <td class="text-end">${{ "{:,.2f}".format(result.get('Net Pay (Provincially specific deductions for damages)', 0)) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+               <div class="card income-summary">
+                   <h2>Income Summary</h2>
+                   <table class="table">
+                       <tbody>
+                           <tr>
+                               <td>Gross Income</td>
+                               <td class="text-end">${{ "{:,.2f}".format(result.get("Gross Income", 0)) }}</td>
+                           </tr>
+                           {% if result.get('Dependent Benefit', 0) > 0 %}
+                           <tr>
+                               <td>Dependent Deduction</td>
+                               <td class="text-end">${{ "{:,.2f}".format(result.get('Dependent Benefit', 0)) }}</td>
+                           </tr>
+                           {% endif %}
+                           <tr>
+                               <td>Federal Tax</td>
+                               <td class="text-end">-${{ "{:,.2f}".format(result.get('Federal Tax', 0)) }}</td>
+                           </tr>
+                           <tr>
+                               <td>Provincial Tax</td>
+                               <td class="text-end">-${{ "{:,.2f}".format(result.get('Provincial Tax', 0)) }}</td>
+                           </tr>
+                           <tr>
+                               <td>CPP/EI Contributions</td>
+                               <td class="text-end">-${{ "{:,.2f}".format(result.get('CPP Contribution', 0) + result.get('EI Contribution', 0)) }}</td>
+                           </tr>
+                           <tr class="total-row">
+                               <td>Net Income</td>
+                               <td class="text-end">${{ "{:,.2f}".format(result.get('Net Pay (Provincially specific deductions for damages)', 0)) }}</td>
+                           </tr>
+                       </tbody>
+                   </table>
+               </div>
             </div>
 
             <div class="col-md-6">
