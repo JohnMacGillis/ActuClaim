@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(filename="/var/www/actuclaim/tax_debug.log", level=logging.DEBUG, format="%(asctime)s - %(message)s")
 from flask import send_from_directory, send_file
 from flask import Flask, render_template, request, redirect, url_for, send_file, make_response, jsonify, session, flash
 import os
@@ -83,6 +85,10 @@ def calculate():
 
         # Calculate take-home pay
         result = calculate_take_home(salary, province, working_days, hours_per_day, is_hourly, hours_per_week, dependents)
+        logging.debug(f"Full Result: {result}")
+        logging.debug(f"Dependents: {dependents}")
+        logging.debug(f"Province: {province}")
+        logging.debug(f"Salary: {salary}")
         
         # Get collateral benefits
         ei_benefits_to_date = safe_float(request.form.get('ei_benefits_to_date'))
