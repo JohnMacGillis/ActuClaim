@@ -34,7 +34,7 @@
                 </tr>
                 <tr class="total-row">
                     <td>Total Economic Damages</td>
-                    <td class="text-end">${{ "{:,.2f}".format(total_damages) }}</td>
+                    <td class="text-end">${{ "{:,.2f}".format(net_past_lost_wages + present_value_details.get('present_value', 0)) }}</td>
                 </tr>
             </tbody>
         </table>
@@ -46,12 +46,6 @@
                 <div class="card income-summary">
                     <h2>Income Summary</h2>
                     <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th class="text-end">Amount</th>
-                            </tr>
-                        </thead>
                         <tbody>
                             <tr>
                                 <td>Gross Income</td>
@@ -79,40 +73,6 @@
             </div>
 
             <div class="col-md-6">
-                <div class="card collateral-benefits">
-                    <h2>Collateral Benefits</h2>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Past Benefits (To Date)</th>
-                                <th class="text-end">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>EI Benefits</td>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('EI Benefits (to date)', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <td>LTD Benefits</td>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('LTD Benefits (to date)', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <td>CPPD Benefits</td>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('CPPD Benefits (to date)', 0)) }}</td>
-                            </tr>
-                            <tr class="total-row">
-                                <td>Total Past Benefits</td>
-                                <td class="text-end">${{ "{:,.2f}".format(collateral_benefits.get('Total Past Benefits', 0)) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-4">
-            <div class="col-md-6">
                 <div class="card past-lost-wages">
                     <h2>Past Lost Wages</h2>
                     <table class="table">
@@ -133,7 +93,9 @@
                     </table>
                 </div>
             </div>
+        </div>
 
+        <div class="row mt-4">
             <div class="col-md-6">
                 <div class="card future-lost-wages">
                     <h2>Future Lost Wages</h2>
@@ -163,9 +125,7 @@
                     </table>
                 </div>
             </div>
-        </div>
 
-        <div class="row mt-4">
             <div class="col-md-6">
                 <div class="card pre-judgment-interest">
                     <h2>Pre-Judgment Interest (PJI) Calculation</h2>
@@ -194,44 +154,6 @@
                             <tr class="total-row">
                                 <td>Pre-Judgment Interest Amount</td>
                                 <td class="text-end">${{ "{:,.2f}".format(calculation_details.get('Interest Amount', 0)) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card future-lost-wages-calc">
-                    <h2>Future Lost Wages Calculation</h2>
-                    <table class="table">
-                        <tbody>
-                            <tr>
-                                <td>Calculation Method</td>
-                                <td class="text-end">Annuity Present Value</td>
-                            </tr>
-                            <tr>
-                                <td>Net Annual Income</td>
-                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('annual_salary', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <td>Total Months</td>
-                                <td class="text-end">{{ present_value_details.get('total_months', 0) }}</td>
-                            </tr>
-                            <tr>
-                                <td>Annual Discount Rate</td>
-                                <td class="text-end">{{ "{:.2f}%".format(present_value_details.get('discount_rate', 0) * 100) }}</td>
-                            </tr>
-                            <tr>
-                                <td>Projected Monthly Payment</td>
-                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('annual_salary', 0) / 12) }}</td>
-                            </tr>
-                            <tr>
-                                <td>Future Collateral Benefits</td>
-                                <td class="text-end">-${{ "{:,.2f}".format(present_value_details.get('future_collateral_benefits', 0)) }}</td>
-                            </tr>
-                            <tr class="total-row">
-                                <td>Total Present Value</td>
-                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('present_value', 0)) }}</td>
                             </tr>
                         </tbody>
                     </table>
