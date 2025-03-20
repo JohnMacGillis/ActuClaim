@@ -227,6 +227,7 @@ def calculate():
                 calculation_details = {
                 "Dependents": dependents,
                     "Loss Date": loss_date.strftime('%Y-%m-%d'),
+                    "Proposal Date": start_date.strftime("%Y-%m-%d"),
                     "Calculation Date": datetime.date.today().strftime('%Y-%m-%d'),
                     "Years Between": 0,
                     "PJI Rate": 0,
