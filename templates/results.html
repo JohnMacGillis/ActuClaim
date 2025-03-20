@@ -25,8 +25,24 @@
         <table class="table damages-summary-table">
             <tbody>
                 <tr>
-                    <td>Past Lost Wages</td>
-                    <td class="text-end">${{ "{:,.2f}".format(net_past_lost_wages) }}</td>
+                    <td>Past Lost Wages with Interest</td>
+                    <td class="text-end">
+                    {% if past_lost_wages_with_interest > 0 %}
+                        ${{ "{:,.2f}".format(past_lost_wages_with_interest) }}
+                    {% else %}
+                        {% set interest_amount = calculation_details.get('Interest Amount', 0) %}
+                        {% if interest_amount == 0 %}
+                            {% if calculation_details.get('Years Between', 0) > 0 and calculation_details.get('PJI Rate', 0) > 0 %}
+                                {% set interest_amount = net_past_lost_wages * (calculation_details.get('Years Between', 0) * calculation_details.get('PJI Rate', 0) / 100) %}
+                            {% elif loss_date is defined and current_date is defined %}
+                                {% set days_diff = (current_date - loss_date).days %}
+                                {% set years_diff = days_diff / 365.25 %}
+                                {% set interest_amount = net_past_lost_wages * (years_diff * 2.5 / 100) %}
+                            {% endif %}
+                        {% endif %}
+                        ${{ "{:,.2f}".format(net_past_lost_wages + interest_amount) }}
+                    {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td>Future Lost Wages</td>
@@ -34,7 +50,22 @@
                 </tr>
                 <tr class="total-row">
                     <td>Total Economic Damages</td>
-                    <td class="text-end">${{ "{:,.2f}".format(net_past_lost_wages + present_value_details.get('present_value', 0)) }}</td>
+                    <td class="text-end" id="total-damages-amount">
+                    {% set interest_amount = calculation_details.get('Interest Amount', 0) %}
+                    {% if interest_amount == 0 %}
+                        {% if calculation_details.get('Years Between', 0) > 0 and calculation_details.get('PJI Rate', 0) > 0 %}
+                            {% set interest_amount = net_past_lost_wages * (calculation_details.get('Years Between', 0) * calculation_details.get('PJI Rate', 0) / 100) %}
+                        {% elif loss_date is defined and current_date is defined %}
+                            {% set days_diff = (current_date - loss_date).days %}
+                            {% set years_diff = days_diff / 365.25 %}
+                            {% set interest_amount = net_past_lost_wages * (years_diff * 2.5 / 100) %}
+                        {% endif %}
+                    {% endif %}
+                    {% set past_with_interest = net_past_lost_wages + interest_amount %}
+                    {% set future_value = present_value_details.get('present_value', 0) %}
+                    {% set total = past_with_interest + future_value %}
+                    ${{ "{:,.2f}".format(total) }}
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -53,7 +84,7 @@
                            </tr>
                            {% if result.get('Dependent Benefit', 0) > 0 %}
                            <tr>
-                               <td>Dependent Deduction</td>
+                               <td>Dependent Benefit ({{ calculation_details.get('Dependents', '0') }} dependents)</td>
                                <td class="text-end">${{ "{:,.2f}".format(result.get('Dependent Benefit', 0)) }}</td>
                            </tr>
                            {% endif %}
@@ -62,8 +93,8 @@
                                <td class="text-end">-${{ "{:,.2f}".format(result.get('Federal Tax', 0)) }}</td>
                            </tr>
                            <tr>
-                               <td>Provincial Tax</td>
-                               <td class="text-end">-${{ "{:,.2f}".format(result.get('Nova scotia Tax', 0)) }}</td>
+                               <td>Provincial Tax ({{ province | title }})</td>
+                               <td class="text-end">-${{ "{:,.2f}".format(result.get(province|title + ' Tax', result.get('Provincial Tax', 0))) }}</td>
                            </tr>
                            <tr>
                                <td>CPP/EI Contributions</td>
@@ -84,6 +115,10 @@
                     <table class="table">
                         <tbody>
                             <tr>
+                                <td>Missed Time</td>
+                                <td class="text-end">{{ "{:,.2f} {}".format(missed_time, missed_time_unit) }}</td>
+                            </tr>
+                            <tr>
                                 <td>Gross Missed Income</td>
                                 <td class="text-end">${{ "{:,.2f}".format(missed_pay) }}</td>
                             </tr>
@@ -103,8 +138,93 @@
 
         <div class="row mt-4">
             <div class="col-md-6">
+                <div class="card pre-judgment-interest">
+                    <h2>Pre-Judgment Interest (PJI) Calculation</h2>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Original Past Lost Wages</td>
+                                <td class="text-end">${{ "{:,.2f}".format(net_past_lost_wages) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Loss Date</td>
+                                <td class="text-end">{{ loss_date.strftime("%Y-%m-%d") if loss_date is defined else "Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Calculation Date</td>
+                                <td class="text-end">{{ current_date.strftime("%Y-%m-%d") if current_date is defined else "Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Years Between</td>
+                                <td class="text-end">
+                                {% if calculation_details.get('Years Between', 0) > 0 %}
+                                    {{ "{:.2f}".format(calculation_details.get('Years Between', 0)) }}
+                                {% elif loss_date is defined and current_date is defined %}
+                                    {% set days_diff = (current_date - loss_date).days %}
+                                    {% set years_diff = days_diff / 365.25 %}
+                                    {{ "{:.2f}".format(years_diff) }}
+                                {% else %}
+                                    0.00
+                                {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>PJI Rate</td>
+                                <td class="text-end">
+                                {% if calculation_details.get('PJI Rate', 0) > 0 %}
+                                    {{ "{:.2f}%".format(calculation_details.get('PJI Rate', 0)) }}
+                                {% else %}
+                                    {{ "{:.2f}%".format(2.5) }} <!-- Default fallback rate -->
+                                {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Pre-Judgment Interest Amount</td>
+                                <td class="text-end">
+                                {% if calculation_details.get('Interest Amount', 0) > 0 %}
+                                    ${{ "{:,.2f}".format(calculation_details.get('Interest Amount', 0)) }}
+                                {% elif calculation_details.get('Years Between', 0) > 0 and calculation_details.get('PJI Rate', 0) > 0 %}
+                                    {% set interest = net_past_lost_wages * (calculation_details.get('Years Between', 0) * calculation_details.get('PJI Rate', 0) / 100) %}
+                                    ${{ "{:,.2f}".format(interest) }}
+                                {% elif loss_date is defined and current_date is defined %}
+                                    {% set days_diff = (current_date - loss_date).days %}
+                                    {% set years_diff = days_diff / 365.25 %}
+                                    {% set interest = net_past_lost_wages * (years_diff * 2.5 / 100) %}
+                                    ${{ "{:,.2f}".format(interest) }}
+                                {% else %}
+                                    $0.00
+                                {% endif %}
+                                </td>
+                            </tr>
+                            <tr class="total-row highlight">
+                                <td>Past Lost Wages with Interest</td>
+                                <td class="text-end">
+                                {% if past_lost_wages_with_interest > 0 %}
+                                    ${{ "{:,.2f}".format(past_lost_wages_with_interest) }}
+                                {% else %}
+                                    {% set interest_amount = calculation_details.get('Interest Amount', 0) %}
+                                    {% if interest_amount == 0 %}
+                                        {% if calculation_details.get('Years Between', 0) > 0 and calculation_details.get('PJI Rate', 0) > 0 %}
+                                            {% set interest_amount = net_past_lost_wages * (calculation_details.get('Years Between', 0) * calculation_details.get('PJI Rate', 0) / 100) %}
+                                        {% elif loss_date is defined and current_date is defined %}
+                                            {% set days_diff = (current_date - loss_date).days %}
+                                            {% set years_diff = days_diff / 365.25 %}
+                                            {% set interest_amount = net_past_lost_wages * (years_diff * 2.5 / 100) %}
+                                        {% endif %}
+                                    {% endif %}
+                                    ${{ "{:,.2f}".format(net_past_lost_wages + interest_amount) }}
+                                {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-6">
                 <div class="card future-lost-wages">
                     <h2>Future Lost Wages</h2>
+                    {% if present_value_details.get('present_value', 0) > 0 %}
                     <table class="table">
                         <tbody>
                             <tr>
@@ -129,40 +249,11 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card pre-judgment-interest">
-                    <h2>Pre-Judgment Interest (PJI) Calculation</h2>
-                    <table class="table">
-                        <tbody>
-                            <tr>
-                                <td>Base Amount</td>
-                                <td class="text-end">${{ "{:,.2f}".format(calculation_details.get('Base Amount', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <td>PJI Rate</td>
-                                <td class="text-end">{{ "{:.2f}%".format(calculation_details.get('PJI Rate', 0)) }}</td>
-                            </tr>
-                            <tr>
-                                <td>Loss Date</td>
-                                <td class="text-end">{{ loss_date.strftime("%Y-%m-%d") if loss_date is defined else "Not specified" }}</td>
-                            </tr>
-                            <tr>
-                                <td>Calculation Date</td>
-                                <td class="text-end">{{ current_date.strftime("%Y-%m-%d") if current_date is defined else "Not specified" }}</td>
-                            </tr>
-                            <tr>
-                                <td>Years Between</td>
-                                <td class="text-end">{{ "{:.2f}".format(calculation_details.get('Years Between', 0)) }}</td>
-                            </tr>
-                            <tr class="total-row">
-                                <td>Pre-Judgment Interest Amount</td>
-                                <td class="text-end">${{ "{:,.2f}".format(calculation_details.get('Interest Amount', 0)) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    {% else %}
+                    <div class="no-future-wages-message">
+                        <p>No future lost wages calculated as requested.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -173,19 +264,39 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Get all the values we need
+    const pastWagesWithInterestElement = document.querySelector('.damages-summary-table tr:first-child .text-end');
+    const futureWagesElement = document.querySelector('.damages-summary-table tr:nth-child(2) .text-end');
     const totalElement = document.querySelector('.damages-summary-table .total-row .text-end');
-    if (totalElement) {
-        const amount = parseFloat(totalElement.textContent.replace(/[,$]/g, ''));
-        animateCounter(totalElement, amount);
+    
+    if (pastWagesWithInterestElement && futureWagesElement && totalElement) {
+        // Parse values (remove $ and commas)
+        const pastWagesWithInterest = parseFloat(pastWagesWithInterestElement.textContent.replace(/[,$]/g, '')) || 0;
+        const futureWages = parseFloat(futureWagesElement.textContent.replace(/[,$]/g, '')) || 0;
+        
+        // Calculate the correct total
+        const correctTotal = pastWagesWithInterest + futureWages;
+        
+        // Format and update the total
+        totalElement.textContent = '
+ + correctTotal.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        // Now animate the total
+        animateCounter(totalElement, correctTotal);
     }
 
     function animateCounter(element, finalValue, duration = 1500) {
+        const originalText = element.textContent;
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
             const currentValue = progress * finalValue;
-            element.textContent = '$' + currentValue.toLocaleString('en-US', {
+            element.textContent = '
+ + currentValue.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
