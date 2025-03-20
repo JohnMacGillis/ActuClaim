@@ -34,8 +34,8 @@ def create_enhanced_pdf_report(client_name, province, calculation_details, prese
     """
     # Create document
     doc = SimpleDocTemplate(output_path, pagesize=letter, 
-                          leftMargin=0.5*inch, rightMargin=0.5*inch,
-                          topMargin=0.5*inch, bottomMargin=0.5*inch)
+                          leftMargin=1.0*inch, rightMargin=1.0*inch,
+                          topMargin=1.0*inch, bottomMargin=1.0*inch)
     
     # Create styles
     styles = getSampleStyleSheet()
@@ -316,8 +316,6 @@ def create_enhanced_pdf_report(client_name, province, calculation_details, prese
         ["Retirement Age:", str(retirement_age) if retirement_age else "Not specified"],
         ["Time Missed:", f"{missed_time} {missed_time_unit}"],
         ["Dependents (under 18):", str(calculation_details.get("Dependents", 0))],
-        ["Discount Rate:", f"{present_value_details.get('discount_rate', 0)*100:.2f}%"],
-        ["Prejudgment Interest:", f"{calculation_details.get('PJI Rate', 0):.2f}%"]
     ]
     
     personal_table = Table(personal_data, colWidths=[2.5*inch, 4*inch])
@@ -363,7 +361,8 @@ def create_enhanced_pdf_report(client_name, province, calculation_details, prese
     past_data = [
         [Paragraph("Item", table_header_style), Paragraph("Amount", table_header_style)],
         ["Gross Lost Income:", f"${gross_lost_wages:,.2f}"],
-        ["Net Lost Income:", f"${calculation_details.get('Original Past Lost Wages', 0) + past_collateral_benefits:,.2f}"],
+        ["Net Lost Income:", f"${calculation_details.get('Original Past Lost Wages', calculation_details.get('Base Amount', 0)):,.2f}"],
+        ["Prejudgment Interest Rate:", f"{calculation_details.get('PJI Rate', 0):.2f}%"],
         ["Prejudgment Interest:", f"${calculation_details.get('Interest Amount', 0):,.2f}"],
         ["Collateral Benefits Deduction:", f"-${past_collateral_benefits:,.2f}"],
         ["Total Past Lost Wages:", f"${calculation_details.get('Past Lost Wages with Interest', 0):,.2f}"]

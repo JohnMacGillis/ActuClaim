@@ -235,6 +235,24 @@ def calculate():
                     "Interest Amount": 0,
                     "Past Lost Wages with Interest": net_past_lost_wages
                 }
+        # Make sure we have a non-zero interest amount if time has passed
+        if calculation_details.get("Interest Amount", 0) == 0 and calculation_details.get("Years Between", 0) > 0:
+            # Re-calculate interest amount based on PJI rate
+            pji_rate = calculation_details.get("PJI Rate", 2.0) / 100  # Convert to decimal
+            years_between = calculation_details.get("Years Between", 0)
+            base_amount = calculation_details.get("Base Amount", net_past_lost_wages)
+            
+            # Calculate interest using compound interest formula
+            interest_amount = base_amount * pji_rate * years_between  # Simple interest as fallback
+            calculation_details["Interest Amount"] = interest_amount
+            calculation_details["Past Lost Wages with Interest"] = base_amount + interest_amount
+            past_lost_wages_with_interest = base_amount + interest_amount
+            
+            print(f"Recalculated Interest: ${interest_amount:.2f}")
+        
+        # Make sure the original_past_lost_wages is set in calculation_details
+        if "Original Past Lost Wages" not in calculation_details:
+            calculation_details["Original Past Lost Wages"] = net_past_lost_wages
             # Handle return status with safer default and validation
         return_status = request.form.get('return_status')
         if not return_status:

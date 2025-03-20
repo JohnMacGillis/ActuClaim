@@ -5,7 +5,7 @@ def calculate_past_lost_wages_with_interest(net_past_lost_wages, loss_date, pji_
     """Calculate past lost wages with interest, always using T-Bill rates."""
     # Get current date
     current_date = datetime.now()
-    
+
     # Calculate years between loss date and current date
     loss_date_obj = datetime.strptime(loss_date, '%Y-%m-%d')
     years_between = (current_date - loss_date_obj).days / 365.25  # Using 365.25 to account for leap years
@@ -33,6 +33,9 @@ def calculate_past_lost_wages_with_interest(net_past_lost_wages, loss_date, pji_
         "Interest Amount": past_loss_with_interest - net_past_lost_wages,
         "Past Lost Wages with Interest": past_loss_with_interest
     }
+
+    # After creating the calculation_details dictionary, add:
+    calculation_details["Original Past Lost Wages"] = net_past_lost_wages
     
     return round(past_loss_with_interest, 2), calculation_details
 
