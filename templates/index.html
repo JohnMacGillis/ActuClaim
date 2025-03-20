@@ -392,6 +392,15 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="calculate_future_wages" class="form-label">Calculate Future Lost Wages?</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="calculate_future_wages" name="calculate_future_wages" checked>
+                                <label class="form-check-label" for="calculate_future_wages"></label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="row mt-4">
@@ -693,6 +702,26 @@
         
         // Update PJI rate when loss date changes
         const lossDateInput = document.getElementById('loss_date');
+        const calculateFutureWagesToggle = document.getElementById("calculate_future_wages");
+        const startDateGroup = document.getElementById("start_date").closest(".form-group");
+        const returnStatusGroup = document.getElementById("return_status").closest(".form-group");
+        // Function to toggle visibility of future lost wages fields
+        function toggleFutureWagesFields() {
+            if (calculateFutureWagesToggle.checked) {
+                startDateGroup.closest(".col-md-6").style.display = "block";
+                returnStatusGroup.closest(".col-md-6").style.display = "block";
+            } else {
+                startDateGroup.closest(".col-md-6").style.display = "none";
+                returnStatusGroup.closest(".col-md-6").style.display = "none";
+            }
+        }
+
+        // Initial toggle state
+        toggleFutureWagesFields();
+
+        // Add event listener to toggle
+        calculateFutureWagesToggle.addEventListener("change", toggleFutureWagesFields);
+
         if (lossDateInput) {
             lossDateInput.addEventListener('change', function() {
                 // Update PJI rate when loss date changes
@@ -820,6 +849,26 @@
         // Add the new T-Bill rate calculation code here:
         // Get references to the relevant form elements
         const lossDateInput = document.getElementById('loss_date');
+        const calculateFutureWagesToggle = document.getElementById("calculate_future_wages");
+        const startDateGroup = document.getElementById("start_date").closest(".form-group");
+        const returnStatusGroup = document.getElementById("return_status").closest(".form-group");
+        // Function to toggle visibility of future lost wages fields
+        function toggleFutureWagesFields() {
+            if (calculateFutureWagesToggle.checked) {
+                startDateGroup.closest(".col-md-6").style.display = "block";
+                returnStatusGroup.closest(".col-md-6").style.display = "block";
+            } else {
+                startDateGroup.closest(".col-md-6").style.display = "none";
+                returnStatusGroup.closest(".col-md-6").style.display = "none";
+            }
+        }
+
+        // Initial toggle state
+        toggleFutureWagesFields();
+
+        // Add event listener to toggle
+        calculateFutureWagesToggle.addEventListener("change", toggleFutureWagesFields);
+
         const calculationDateInput = document.getElementById('start_date'); // Using start_date as calculation date
         const pjiRateDisplay = document.getElementById('pji_rate_display');
         const pjiRateInput = document.getElementById('pji_rate');

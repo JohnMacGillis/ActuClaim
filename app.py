@@ -292,6 +292,19 @@ def calculate():
                 days_difference = (retirement_date - start_date).days
                 time_horizon = days_difference / 365.25
         
+        # Check if future lost wages should be calculated
+        calculate_future_wages = "calculate_future_wages" in request.form
+        if not calculate_future_wages:
+            present_value = 0
+            present_value_details = {
+                "Annual Income": 0,
+                "Annual Take-Home Pay": 0,
+                "Monthly Take-Home Pay": 0,
+                "Discount Rate": 0,
+                "Number of Years": 0,
+    "Present Value": 0
+}
+
         # Calculate future lost wages
         annual_net_salary = result["Net Pay (Provincially specific deductions for damages)"]
         annual_collateral_benefits = total_annual_future_benefits
