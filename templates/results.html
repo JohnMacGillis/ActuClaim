@@ -94,7 +94,7 @@
                            </tr>
                            <tr>
                                <td>Provincial Tax ({{ province | title }})</td>
-                               <td class="text-end">-${{ "{:,.2f}".format(result.get(province|title + ' Tax', result.get('Provincial Tax', 0))) }}</td>
+                               <td class="text-end">-${{ "{:,.2f}".format(result.get(province|title + ' Tax', result.get('Provincial Tax', result.get(province.capitalize() + ' Tax', 0)))) }}</td>
                            </tr>
                            <tr>
                                <td>CPP/EI Contributions</td>
