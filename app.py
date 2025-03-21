@@ -314,42 +314,44 @@ def calculate():
         calculate_future_wages = "calculate_future_wages" in request.form
         if not calculate_future_wages:
             present_value = 0
+            # Properly initialize present_value_details with all zeros
             present_value_details = {
-                "Annual Income": 0,
-                "Annual Take-Home Pay": 0,
-                "Monthly Take-Home Pay": 0,
-                "Discount Rate": 0,
-                "Number of Years": 0,
-    "Present Value": 0
-}
+                "annual_salary": 0,
+                "monthly_payment": 0,
+                "time_horizon": 0,
+                "total_months": 0,
+                "discount_rate": 0,
+                "present_value": 0,
+                "future_collateral_benefits": 0
+            }
+        else:
+            # Calculate future lost wages
+            annual_net_salary = result["Net Pay (Provincially specific deductions for damages)"]
+            annual_collateral_benefits = total_annual_future_benefits
+            net_annual_salary = annual_net_salary - annual_collateral_benefits
+    
+            # Get discount rate with province-specific default
+            if province.lower() == "nova scotia":
+                default_discount_rate = 3.5
+            else:  # PEI, Newfoundland, New Brunswick all use 2.5
+                default_discount_rate = 2.5
+            annual_discount_rate = safe_float(request.form.get('discount_rate'), default_discount_rate) / 100
 
-        # Calculate future lost wages
-        annual_net_salary = result["Net Pay (Provincially specific deductions for damages)"]
-        annual_collateral_benefits = total_annual_future_benefits
-        net_annual_salary = annual_net_salary - annual_collateral_benefits
-        
-        # Get discount rate with province-specific default
-        if province.lower() == "nova scotia":
-            default_discount_rate = 3.5
-        else:  # PEI, Newfoundland, New Brunswick all use 2.5
-            default_discount_rate = 2.5
-        annual_discount_rate = safe_float(request.form.get('discount_rate'), default_discount_rate) / 100
-
-        # Calculate present value
-        present_value, total_months = calculate_future_lost_wages_annuity(
-            net_annual_salary, time_horizon, annual_discount_rate
-        )
-        
-        # Store details for document
-        present_value_details = {
-            "annual_salary": net_annual_salary,
-            "monthly_payment": net_annual_salary / 12,
-            "time_horizon": time_horizon,
-            "total_months": total_months,
-            "discount_rate": annual_discount_rate,
-            "present_value": present_value,
-            "future_collateral_benefits": annual_collateral_benefits * time_horizon
-        }
+            # Calculate present value
+            present_value, total_months = calculate_future_lost_wages_annuity(
+                net_annual_salary, time_horizon, annual_discount_rate
+            )
+    
+            # Store details for document
+            present_value_details = {
+                "annual_salary": net_annual_salary,
+                "monthly_payment": net_annual_salary / 12,
+                "time_horizon": time_horizon,
+                "total_months": total_months,
+                "discount_rate": annual_discount_rate,
+                "present_value": present_value,
+                "future_collateral_benefits": annual_collateral_benefits * time_horizon
+            }
         
         # Calculate total damages
         total_damages = past_lost_wages_with_interest + present_value
