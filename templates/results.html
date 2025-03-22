@@ -331,108 +331,124 @@ document.addEventListener('DOMContentLoaded', function() {
         window.requestAnimationFrame(step);
     }
     
-    // First, remove any existing copy buttons to avoid duplicates
-    const existingButtons = document.querySelectorAll('#copyTablesBtn');
-    existingButtons.forEach(button => button.remove());
+    // Add copy button
+    const copyButton = document.createElement('button');
+    copyButton.id = 'copyTablesBtn';
+    copyButton.className = 'btn btn-primary';
+    copyButton.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
+    copyButton.style.marginBottom = '10px';
+    copyButton.style.marginLeft = '10px';
     
-    // Add copy button to the header
+    // Find a place to insert the button
     const headerContent = document.querySelector('.header-content');
     if (headerContent) {
-        const copyButton = document.createElement('button');
-        copyButton.id = 'copyTablesBtn';
-        copyButton.className = 'btn btn-primary';
-        copyButton.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
-        copyButton.style.marginBottom = '10px';
-        copyButton.style.marginLeft = '10px';
-        
-        // Insert button after heading
         const heading = headerContent.querySelector('h1');
         if (heading) {
             heading.parentNode.insertBefore(copyButton, heading.nextSibling);
         } else {
             headerContent.prepend(copyButton);
         }
-        
-        // Add click event listener for basic HTML table format (Excel-like)
-        copyButton.addEventListener('click', function() {
-            try {
-                // Create HTML content for copying - simple Excel-like tables
-                let htmlContent = '<div style="font-family: Arial, sans-serif;">';
-                htmlContent += '<h2>ACTUCLAIM ECONOMIC DAMAGES CALCULATION</h2>';
+    } else {
+        const summaryCard = document.querySelector('.damages-summary-card');
+        if (summaryCard) {
+            summaryCard.prepend(copyButton);
+        }
+    }
+    
+    // Add event listener to the button
+    copyButton.addEventListener('click', function() {
+        try {
+            // Create HTML content with explicit white backgrounds everywhere
+            let htmlContent = '<div style="font-family: Arial, sans-serif; color: black; background-color: white !important;">';
+            htmlContent += '<h2 style="color: black; margin-bottom: 5px; background-color: white !important;">ACTUCLAIM ECONOMIC DAMAGES CALCULATION</h2>';
+            
+            // Copy each table
+            const tables = document.querySelectorAll('.table');
+            tables.forEach(function(table) {
+                // Get heading
+                const cardEl = table.closest('.card');
+                if (cardEl && cardEl.querySelector('h2')) {
+                    htmlContent += '<h3 style="color: black; margin: 8px 0 3px 0; background-color: white !important;">' + 
+                                  cardEl.querySelector('h2').textContent.trim() + '</h3>';
+                }
                 
-                // Copy each table with simple styling
-                const tables = document.querySelectorAll('.table');
-                tables.forEach(function(table) {
-                    // Get the table heading
-                    const cardEl = table.closest('.card');
-                    if (cardEl && cardEl.querySelector('h2')) {
-                        htmlContent += '<h3>' + cardEl.querySelector('h2').textContent.trim() + '</h3>';
-                    }
+                // Explicitly set white background for table
+                htmlContent += '<table border="1" cellspacing="0" cellpadding="2" style="border-collapse: collapse; border: 1px solid black; background-color: white !important;">';
+                
+                // Process rows
+                const rows = table.querySelectorAll('tr');
+                rows.forEach(function(row) {
+                    // Explicitly set white background for row
+                    htmlContent += '<tr style="background-color: white !important;">';
                     
-                    // Create a simple table with basic Excel-like styling
-                    htmlContent += '<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse;">';
-                    
-                    // Get rows
-                    const rows = table.querySelectorAll('tr');
-                    rows.forEach(function(row) {
-                        htmlContent += '<tr>';
+                    // Process cells
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(function(cell) {
+                        const isAmount = cell.classList.contains('text-end');
+                        const align = isAmount ? 'right' : 'left';
                         
-                        // Get cells
-                        const cells = row.querySelectorAll('td');
-                        cells.forEach(function(cell) {
-                            // Determine if it's a number cell for right alignment
-                            const isAmount = cell.classList.contains('text-end');
-                            const align = isAmount ? 'right' : 'left';
-                            
-                            // Add cell with minimal styling
-                            htmlContent += '<td style="border: 1px solid black; text-align: ' + align + ';">' + 
-                                          cell.textContent.trim() + '</td>';
-                        });
-                        
-                        htmlContent += '</tr>';
+                        // Explicitly set white background for cell
+                        htmlContent += '<td style="border: 1px solid black; text-align: ' + align + 
+                                    '; color: black; padding: 2px 4px; background-color: white !important;">' + 
+                                    cell.textContent.trim() + '</td>';
                     });
                     
-                    htmlContent += '</table><br>';
+                    htmlContent += '</tr>';
                 });
                 
-                htmlContent += '</div>';
-                
-                // Create a hidden div to hold the HTML content
-                const container = document.createElement('div');
-                container.innerHTML = htmlContent;
-                container.style.position = 'fixed';
-                container.style.top = '-9999px';
-                document.body.appendChild(container);
-                
-                // Select the content
-                const range = document.createRange();
-                range.selectNode(container);
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-                
-                // Copy the HTML content
-                document.execCommand('copy');
-                
-                // Clean up
-                selection.removeAllRanges();
-                document.body.removeChild(container);
-                
-                // Show feedback
+                htmlContent += '</table>';
+            });
+            
+            htmlContent += '</div>';
+            
+            // Use a different approach for copying styled content
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const clipboardData = new ClipboardItem({ 'text/html': blob });
+            
+            navigator.clipboard.write([clipboardData]).then(() => {
+                // Success
                 this.innerHTML = '<i class="fas fa-check"></i> Copied!';
                 setTimeout(() => {
                     this.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
                 }, 2000);
+            }).catch(err => {
+                console.error('Failed to use modern clipboard API:', err);
                 
-            } catch(err) {
-                console.error('Copy failed:', err);
-                this.innerHTML = '<i class="fas fa-times"></i> Error!';
-                setTimeout(() => {
-                    this.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
-                }, 2000);
-            }
-        });
-    }
+                // Fallback to older method
+                const tempElement = document.createElement('div');
+                tempElement.innerHTML = htmlContent;
+                document.body.appendChild(tempElement);
+                
+                const range = document.createRange();
+                range.selectNodeContents(tempElement);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                const success = document.execCommand('copy');
+                selection.removeAllRanges();
+                document.body.removeChild(tempElement);
+                
+                if (success) {
+                    this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
+                    }, 2000);
+                } else {
+                    this.innerHTML = '<i class="fas fa-times"></i> Error!';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
+                    }, 2000);
+                }
+            });
+        } catch(err) {
+            console.error('Copy failed:', err);
+            this.innerHTML = '<i class="fas fa-times"></i> Error!';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
+            }, 2000);
+        }
+    });
 });
 </script>
 {% endblock %}
