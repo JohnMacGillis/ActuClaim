@@ -8,7 +8,8 @@ import traceback
 from pji_routes import pji_routes
 from werkzeug.utils import secure_filename
 from tax_utils import get_tax_rates, get_available_tax_years, calculate_tax
-from word_generation import create_word_report
+from email_results import send_results_email
+import email_config  # This will load the email configuration
 
 # Import calculation functions
 from income_calculations import calculate_take_home, calculate_collateral_benefits
@@ -357,47 +358,24 @@ def calculate():
         # Calculate total damages
         total_damages = past_lost_wages_with_interest + present_value
         
-        # Generate Word document report
-        try:
-            # Create secure filename
-            base_filename = secure_filename(client_name.replace(' ', '_'))
-            if not base_filename:
-                base_filename = "economic_damages"  # Fallback name
-            
-            filename = f"{base_filename}_actuclaim_report.docx"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            
-            # Call our Word document generation function
-            create_word_report(
-                client_name=client_name,
-                province=province,
-                calculation_details=calculation_details,
-                present_value_details=present_value_details,
-                result=result,
-                collateral_benefits=collateral_benefits,
-                missed_time_unit=missed_time_unit,
-                missed_time=missed_time,
-                output_path=file_path,
-                birthdate=birthdate,
-                retirement_age=retirement_age,
-                loss_date=loss_date,
-                current_date=today,
-                ei_days_remaining=max(0, 182 - (today - ei_start_date).days),
-                return_status=return_status,
-                end_date=end_date if 'end_date' in locals() else None,
-                missed_pay=missed_pay,
-                net_past_lost_wages=net_past_lost_wages
-            )
-            
-            print(f"Word document report saved successfully at: {file_path}")
-            flash("ActuClaim report generated successfully!", "success")
-        except Exception as e:
-            error_details = traceback.format_exc()
-            print(f"Error generating ActuClaim report: {e}")
-            print(f"Detailed error traceback: {error_details}")
-            file_path = None
-            filename = None
-            flash(f"Error generating report: {str(e)}", "danger")
+        # Store calculation results in session for email instead of generating Word document
+        session['client_name'] = client_name
+        session['province'] = province
+        session['calculation_details'] = calculation_details
+        session['present_value_details'] = present_value_details
+        session['result'] = result
+        session['collateral_benefits'] = collateral_benefits
+        session['missed_time_unit'] = missed_time_unit
+        session['missed_time'] = missed_time
+        session['birthdate'] = birthdate.strftime('%Y-%m-%d') if birthdate else None
+        session['retirement_age'] = retirement_age
+        session['loss_date'] = loss_date.strftime('%Y-%m-%d') if loss_date else None
+        session['current_date'] = today.strftime('%Y-%m-%d')
+        session['ei_days_remaining'] = max(0, 182 - (today - ei_start_date).days) if ei_start_date else 0
+        session['missed_pay'] = missed_pay
+        session['net_past_lost_wages'] = net_past_lost_wages
+        session['past_lost_wages_with_interest'] = past_lost_wages_with_interest
+        session['total_damages'] = total_damages
                 
         # Return the results template
         return render_template(
@@ -415,8 +393,6 @@ def calculate():
             missed_time_unit=missed_time_unit,
             past_lost_wages_with_interest=past_lost_wages_with_interest,
             missed_time=missed_time,
-            file_path=file_path,
-            filename=filename,
             birthdate=birthdate,
             retirement_age=retirement_age,
     loss_date=loss_date,
@@ -430,38 +406,135 @@ def calculate():
         print(f"Detailed error traceback: {error_details}")
         flash(f"An error occurred: {str(e)}")
         return redirect(url_for('index'))
-
-@app.route('/download/<filename>')
-def download(filename):
-    try:
-        # Construct the full file path
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
-        # Check if the file exists
-        if not os.path.exists(file_path):
-            flash('The requested file does not exist.', 'error')
+        # Store calculation results in session for email sending
+        session['client_name'] = client_name
+        session['province'] = province
+        session['calculation_details'] = calculation_details
+        session['present_value_details'] = present_value_details
+        session['result'] = result
+        session['collateral_benefits'] = collateral_benefits
+        session['missed_time_unit'] = missed_time_unit
+        session['missed_time'] = missed_time
+        session['birthdate'] = birthdate.strftime('%Y-%m-%d') if birthdate else None
+        session['retirement_age'] = retirement_age
+        session['loss_date'] = loss_date.strftime('%Y-%m-%d') if loss_date else None
+        session['current_date'] = today.strftime('%Y-%m-%d')
+        session['ei_days_remaining'] = max(0, 182 - (today - ei_start_date).days) if ei_start_date else 0
+        session['missed_pay'] = missed_pay
+        session['net_past_lost_wages'] = net_past_lost_wages
+        session['past_lost_wages_with_interest'] = past_lost_wages_with_interest
+        session['total_damages'] = total_damages
+
+@app.route('/send-results-email', methods=['POST'])
+def send_email():
+    try:
+        # Get the recipient email from the form
+        recipient_email = request.form.get('email')
+        if not recipient_email:
+            flash('Email address is required', 'danger')
             return redirect(url_for('index'))
         
-        # Determine content type based on file extension
-        content_type = 'application/pdf'  # Default
-        if filename.endswith('.docx'):
-            content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        # Retrieve session variables with calculation results
+        client_name = session.get('client_name', 'Client')
+        province = session.get('province', 'Not specified')
+        calculation_details = session.get('calculation_details', {})
+        present_value_details = session.get('present_value_details', {})
+        result = session.get('result', {})
+        collateral_benefits = session.get('collateral_benefits', {})
+        missed_time_unit = session.get('missed_time_unit', '')
+        missed_time = session.get('missed_time', 0)
+        birthdate = session.get('birthdate', None)
+        retirement_age = session.get('retirement_age', None)
+        loss_date = session.get('loss_date', None)
+        current_date = datetime.date.today()
+        ei_days_remaining = session.get('ei_days_remaining', 0)
+        missed_pay = session.get('missed_pay', 0)
+        net_past_lost_wages = session.get('net_past_lost_wages', 0)
+        past_lost_wages_with_interest = session.get('past_lost_wages_with_interest', 0)
+        total_damages = session.get('total_damages', 0)
         
-        # Attempt to send the file
-        return send_file(
-            file_path, 
-            as_attachment=True,
-            download_name=filename,
-            mimetype=content_type
+        # Convert date strings to date objects if needed
+        if isinstance(loss_date, str):
+            try:
+                loss_date = datetime.datetime.strptime(loss_date, '%Y-%m-%d').date()
+            except ValueError:
+                loss_date = current_date - datetime.timedelta(days=365)  # Default to 1 year ago
+        
+        if isinstance(birthdate, str):
+            try:
+                birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d').date()
+            except ValueError:
+                birthdate = None
+        
+        # Send the email using our updated function that mirrors the results page
+        email_sent = send_results_email(
+            recipient_email=recipient_email,
+            client_name=client_name,
+            province=province,
+            calculation_details=calculation_details,
+            present_value_details=present_value_details,
+            result=result,
+            collateral_benefits=collateral_benefits,
+            missed_time_unit=missed_time_unit,
+            missed_time=missed_time,
+            birthdate=birthdate,
+            retirement_age=retirement_age,
+            loss_date=loss_date,
+            current_date=current_date,
+            ei_days_remaining=ei_days_remaining,
+            missed_pay=missed_pay,
+            net_past_lost_wages=net_past_lost_wages,
+            past_lost_wages_with_interest=past_lost_wages_with_interest,
+            total_damages=total_damages
         )
-    except Exception as e:
-        # Log the error for debugging
-        print(f"Error downloading file {filename}: {str(e)}")
         
-        # Flash a user-friendly error message
-        flash('An error occurred while downloading the report. Please try again.', 'error')
+        if email_sent:
+            flash('Results successfully sent to ' + recipient_email, 'success')
+        else:
+            flash('Failed to send email. Please check the email configuration.', 'danger')
+            
+        # Redirect to results page
+        return redirect(url_for('results'))
+        
+    except Exception as e:
+        error_details = traceback.format_exc()
+        print(f"Error sending email: {e}")
+        print(f"Detailed error traceback: {error_details}")
+        flash(f"Error sending email: {str(e)}", 'danger')
         return redirect(url_for('index'))
 
+@app.route('/results')
+def results():
+    # Check if calculation results exist in session
+    if not session.get('calculation_details'):
+        flash('No calculation results found. Please complete a calculation first.', 'warning')
+        return redirect(url_for('index'))
+    
+    # Render the results template with session data
+    return render_template(
+        'results.html',
+        title='ActuClaim - Economic Damages Results',
+        client_name=session.get('client_name', 'Client'),
+        province=session.get('province', ''),
+        result=session.get('result', {}),
+        missed_pay=session.get('missed_pay', 0),
+        net_past_lost_wages=session.get('net_past_lost_wages', 0),
+        calculation_details=session.get('calculation_details', {}),
+        present_value_details=session.get('present_value_details', {}),
+        total_damages=session.get('total_damages', 0),
+        collateral_benefits=session.get('collateral_benefits', {}),
+        missed_time_unit=session.get('missed_time_unit', ''),
+        past_lost_wages_with_interest=session.get('past_lost_wages_with_interest', 0),
+        missed_time=session.get('missed_time', 0),
+        file_path=session.get('file_path', None),
+        filename=session.get('filename', None),
+        birthdate=session.get('birthdate', None),
+        retirement_age=session.get('retirement_age', None),
+        loss_date=session.get('loss_date', None),
+        current_date=datetime.date.today(),
+        ei_days_remaining=session.get('ei_days_remaining', 0)
+    )
 app.register_blueprint(pji_routes)
 
 if __name__ == '__main__':
