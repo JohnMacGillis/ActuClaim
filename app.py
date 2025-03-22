@@ -10,6 +10,10 @@ from werkzeug.utils import secure_filename
 from tax_utils import get_tax_rates, get_available_tax_years, calculate_tax
 from email_results import send_results_email
 import email_config  # This will load the email configuration
+try:
+    import mailgun_config
+except ImportError:
+    print("Warning: Mailgun configuration not found. Email may not work properly.")
 
 # Import calculation functions
 from income_calculations import calculate_take_home, calculate_collateral_benefits
@@ -428,81 +432,115 @@ def calculate():
 
 @app.route('/send-results-email', methods=['POST'])
 def send_email():
-    try:
-        # Get the recipient email from the form
-        recipient_email = request.form.get('email')
-        if not recipient_email:
-            flash('Email address is required', 'danger')
-            return redirect(url_for('index'))
+    # Create a log file if it doesn't exist
+    with open('/var/www/actuclaim/email_debug.log', 'a') as f:
+        f.write(f"\n\n--- New email attempt: {datetime.datetime.now()} ---\n")
         
-        # Retrieve session variables with calculation results
-        client_name = session.get('client_name', 'Client')
-        province = session.get('province', 'Not specified')
-        calculation_details = session.get('calculation_details', {})
-        present_value_details = session.get('present_value_details', {})
-        result = session.get('result', {})
-        collateral_benefits = session.get('collateral_benefits', {})
-        missed_time_unit = session.get('missed_time_unit', '')
-        missed_time = session.get('missed_time', 0)
-        birthdate = session.get('birthdate', None)
-        retirement_age = session.get('retirement_age', None)
-        loss_date = session.get('loss_date', None)
-        current_date = datetime.date.today()
-        ei_days_remaining = session.get('ei_days_remaining', 0)
-        missed_pay = session.get('missed_pay', 0)
-        net_past_lost_wages = session.get('net_past_lost_wages', 0)
-        past_lost_wages_with_interest = session.get('past_lost_wages_with_interest', 0)
-        total_damages = session.get('total_damages', 0)
-        
-        # Convert date strings to date objects if needed
-        if isinstance(loss_date, str):
-            try:
-                loss_date = datetime.datetime.strptime(loss_date, '%Y-%m-%d').date()
-            except ValueError:
-                loss_date = current_date - datetime.timedelta(days=365)  # Default to 1 year ago
-        
-        if isinstance(birthdate, str):
-            try:
-                birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d').date()
-            except ValueError:
-                birthdate = None
-        
-        # Send the email with parameters in the correct order to match the function definition
-        email_sent = send_results_email(
-            recipient_email=recipient_email,
-            client_name=client_name,
-            province=province,
-            calculation_details=calculation_details,
-            present_value_details=present_value_details,
-            result=result,
-            collateral_benefits=collateral_benefits,
-            missed_time_unit=missed_time_unit,
-            missed_time=missed_time,
-            past_lost_wages_with_interest=past_lost_wages_with_interest,
-            net_past_lost_wages=net_past_lost_wages,
-            missed_pay=missed_pay,
-            total_damages=total_damages,
-            birthdate=birthdate,
-            retirement_age=retirement_age,
-            loss_date=loss_date,
-            current_date=current_date,
-            ei_days_remaining=ei_days_remaining
-        )
-        
-        if email_sent:
-            flash('Results successfully sent to ' + recipient_email, 'success')
-        else:
-            flash('Failed to send email. Please check the email configuration.', 'danger')
+        try:
+            # Get the recipient email from the form
+            recipient_email = request.form.get('email')
+            f.write(f"Recipient: {recipient_email}\n")
             
-        # Redirect to results page
-        return redirect(url_for('results'))
-        
-    except Exception as e:
-        error_details = traceback.format_exc()
-        print(f"Error sending email: {e}")
-        print(f"Detailed error traceback: {error_details}")
-        flash(f"Error sending email: {str(e)}", 'danger')
-        return redirect(url_for('index'))
+            if not recipient_email:
+                f.write("No recipient email provided\n")
+                flash('Email address is required', 'danger')
+                return redirect(url_for('index'))
+            
+            # Retrieve session variables with calculation results
+            client_name = session.get('client_name', 'Client')
+            province = session.get('province', 'Not specified')
+            calculation_details = session.get('calculation_details', {})
+            present_value_details = session.get('present_value_details', {})
+            result = session.get('result', {})
+            collateral_benefits = session.get('collateral_benefits', {})
+            missed_time_unit = session.get('missed_time_unit', '')
+            missed_time = session.get('missed_time', 0)
+            birthdate = session.get('birthdate', None)
+            retirement_age = session.get('retirement_age', None)
+            loss_date = session.get('loss_date', None)
+            current_date = datetime.date.today()
+            ei_days_remaining = session.get('ei_days_remaining', 0)
+            missed_pay = session.get('missed_pay', 0)
+            net_past_lost_wages = session.get('net_past_lost_wages', 0)
+            past_lost_wages_with_interest = session.get('past_lost_wages_with_interest', 0)
+            total_damages = session.get('total_damages', 0)
+            
+            f.write(f"Client: {client_name}, Province: {province}\n")
+            f.write(f"Session data retrieved\n")
+            
+            # Convert date strings to date objects if needed
+            if isinstance(loss_date, str):
+                try:
+                    loss_date = datetime.datetime.strptime(loss_date, '%Y-%m-%d').date()
+                    f.write(f"Converted loss_date string to date: {loss_date}\n")
+                except ValueError:
+                    loss_date = current_date - datetime.timedelta(days=365)  # Default to 1 year ago
+                    f.write(f"Using default loss_date: {loss_date}\n")
+            
+            if isinstance(birthdate, str):
+                try:
+                    birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d').date()
+                    f.write(f"Converted birthdate string to date: {birthdate}\n")
+                except ValueError:
+                    birthdate = None
+                    f.write("Could not convert birthdate, using None\n")
+            
+            # Log important values
+            f.write(f"Past lost wages with interest: {past_lost_wages_with_interest}\n")
+            f.write(f"Total damages: {total_damages}\n")
+            
+            # Send the email
+            f.write("About to call send_results_email\n")
+            
+            try:
+                email_sent = send_results_email(
+                    recipient_email=recipient_email,
+                    client_name=client_name,
+                    province=province,
+                    calculation_details=calculation_details,
+                    present_value_details=present_value_details,
+                    result=result,
+                    collateral_benefits=collateral_benefits,
+                    missed_time_unit=missed_time_unit,
+                    missed_time=missed_time,
+                    past_lost_wages_with_interest=past_lost_wages_with_interest,
+                    net_past_lost_wages=net_past_lost_wages,
+                    missed_pay=missed_pay,
+                    total_damages=total_damages,
+                    birthdate=birthdate,
+                    retirement_age=retirement_age,
+                    loss_date=loss_date,
+                    current_date=current_date,
+                    ei_days_remaining=ei_days_remaining
+                )
+                
+                f.write(f"Send result: {email_sent}\n")
+                
+                if email_sent:
+                    f.write("Email sent successfully\n")
+                    flash('Results successfully sent to ' + recipient_email, 'success')
+                else:
+                    f.write("Email sending failed\n")
+                    flash('Failed to send email. Please check the email configuration.', 'danger')
+                
+                # Redirect to results page
+                f.write("Redirecting to results page\n")
+                return redirect(url_for('results'))
+                
+            except Exception as email_error:
+                f.write(f"Exception in send_results_email call: {str(email_error)}\n")
+                f.write(traceback.format_exc())
+                flash(f"Error sending email: {str(email_error)}", 'danger')
+                return redirect(url_for('results'))
+            
+        except Exception as e:
+            error_details = traceback.format_exc()
+            f.write(f"Error in send_email function: {str(e)}\n")
+            f.write(f"Traceback: {error_details}\n")
+            print(f"Error sending email: {e}")
+            print(f"Detailed error traceback: {error_details}")
+            flash(f"Error sending email: {str(e)}", 'danger')
+            return redirect(url_for('index'))
 
 @app.route('/results')
 def results():
