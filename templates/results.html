@@ -11,11 +11,7 @@
     <div class="results-header">
         <div class="header-content">
             <h1>Economic Damages Assessment</h1>
-            <div class="d-flex justify-content-end mb-3">
-                <button id="copy-all-btn" class="btn btn-primary" onclick="copyTableData()">
-                    <i class="fas fa-copy"></i> Copy All Tables
-                </button>
-            </div>
+            <button id="copyTablesBtn" class="btn btn-primary">Copy Tables to Clipboard</button>
              <div class="download-section">
                 {% if filename %}
                 <div class="mb-3">
@@ -339,4 +335,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script>
+document.getElementById('copyTablesBtn').addEventListener('click', function() {
+    // Get all tables
+    const tables = document.querySelectorAll('.table');
+    let text = '';
+    
+    // Extract data from each table
+    tables.forEach(function(table) {
+        // Try to get the heading
+        let heading = '';
+        const cardEl = table.closest('.card');
+        if (cardEl && cardEl.querySelector('h2')) {
+            heading = cardEl.querySelector('h2').textContent;
+            text += heading + '\n';
+        }
+        
+        // Get rows
+        const rows = table.querySelectorAll('tr');
+        rows.forEach(function(row) {
+            const cells = row.querySelectorAll('td');
+            let rowText = '';
+            cells.forEach(function(cell) {
+                rowText += cell.textContent.trim() + '\t';
+            });
+            text += rowText + '\n';
+        });
+        
+        text += '\n\n';
+    });
+    
+    // Create temporary element
+    var tempElement = document.createElement('textarea');
+    tempElement.value = text;
+    document.body.appendChild(tempElement);
+    
+    // Select and copy
+    tempElement.select();
+    document.execCommand('copy');
+    
+    // Remove temporary element
+    document.body.removeChild(tempElement);
+    
+    // Change button text temporarily
+    this.textContent = 'Copied!';
+    var btn = this;
+    setTimeout(function() {
+        btn.textContent = 'Copy Tables to Clipboard';
+    }, 2000);
+});
+</script>
 {% endblock %}
+
