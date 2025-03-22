@@ -467,7 +467,7 @@ def send_email():
             except ValueError:
                 birthdate = None
         
-        # Send the email using our updated function that mirrors the results page
+        # Send the email with parameters in the correct order to match the function definition
         email_sent = send_results_email(
             recipient_email=recipient_email,
             client_name=client_name,
@@ -478,15 +478,15 @@ def send_email():
             collateral_benefits=collateral_benefits,
             missed_time_unit=missed_time_unit,
             missed_time=missed_time,
+            past_lost_wages_with_interest=past_lost_wages_with_interest,
+            net_past_lost_wages=net_past_lost_wages,
+            missed_pay=missed_pay,
+            total_damages=total_damages,
             birthdate=birthdate,
             retirement_age=retirement_age,
             loss_date=loss_date,
             current_date=current_date,
-            ei_days_remaining=ei_days_remaining,
-            missed_pay=missed_pay,
-            net_past_lost_wages=net_past_lost_wages,
-            past_lost_wages_with_interest=past_lost_wages_with_interest,
-            total_damages=total_damages
+            ei_days_remaining=ei_days_remaining
         )
         
         if email_sent:

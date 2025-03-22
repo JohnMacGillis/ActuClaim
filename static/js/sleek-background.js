@@ -174,3 +174,65 @@ function initStickyProgressBar() {
     // Initial sync
     syncProgressBars();
 }
+function copyTableData() {
+    // Create a hidden text area
+    const textarea = document.createElement('textarea');
+    
+    // Get all tables
+    const tables = document.querySelectorAll('table');
+    let allData = '';
+    
+    // Process each table
+    tables.forEach(table => {
+        // Find table heading if available
+        let heading = '';
+        const parentEl = table.parentElement;
+        if (parentEl && parentEl.querySelector('h2')) {
+            heading = parentEl.querySelector('h2').textContent + '\n';
+        }
+        
+        allData += heading;
+        
+        // Process rows
+        const rows = table.querySelectorAll('tr');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td, th');
+            let rowData = '';
+            
+            cells.forEach((cell, i) => {
+                rowData += cell.textContent.trim();
+                if (i < cells.length - 1) {
+                    rowData += '\t';
+                }
+            });
+            
+            allData += rowData + '\n';
+        });
+        
+        allData += '\n\n';
+    });
+    
+    // Set textarea value
+    textarea.value = allData;
+    
+    // Add to body
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    
+    // Select and copy
+    textarea.select();
+    document.execCommand('copy');
+    
+    // Clean up
+    document.body.removeChild(textarea);
+    
+    // Show feedback
+    const btn = document.getElementById('copy-all-btn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    
+    setTimeout(function() {
+        btn.textContent = originalText;
+    }, 2000);
+}
