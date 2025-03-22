@@ -50,4 +50,3 @@ Thumbs.db
 .vscode/
 .idea/
 app.py.new
-email_config.py
