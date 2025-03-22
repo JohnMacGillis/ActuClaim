@@ -8,6 +8,7 @@ import traceback
 from pji_routes import pji_routes
 from werkzeug.utils import secure_filename
 from tax_utils import get_tax_rates, get_available_tax_years, calculate_tax
+from word_generation import create_word_report
 
 # Import calculation functions
 from income_calculations import calculate_take_home, calculate_collateral_benefits
@@ -356,18 +357,18 @@ def calculate():
         # Calculate total damages
         total_damages = past_lost_wages_with_interest + present_value
         
-        # Generate enhanced PDF report
+        # Generate Word document report
         try:
             # Create secure filename
             base_filename = secure_filename(client_name.replace(' ', '_'))
             if not base_filename:
                 base_filename = "economic_damages"  # Fallback name
             
-            filename = f"{base_filename}_actuclaim_report.pdf"
+            filename = f"{base_filename}_actuclaim_report.docx"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             
-            # Call our enhanced PDF generation function
-            create_enhanced_pdf_report(
+            # Call our Word document generation function
+            create_word_report(
                 client_name=client_name,
                 province=province,
                 calculation_details=calculation_details,
@@ -379,12 +380,16 @@ def calculate():
                 output_path=file_path,
                 birthdate=birthdate,
                 retirement_age=retirement_age,
-    loss_date=loss_date,
-    current_date=today,
-    ei_days_remaining=max(0, 182 - (today - ei_start_date).days)
+                loss_date=loss_date,
+                current_date=today,
+                ei_days_remaining=max(0, 182 - (today - ei_start_date).days),
+                return_status=return_status,
+                end_date=end_date if 'end_date' in locals() else None,
+                missed_pay=missed_pay,
+                net_past_lost_wages=net_past_lost_wages
             )
             
-            print(f"Enhanced PDF report saved successfully at: {file_path}")
+            print(f"Word document report saved successfully at: {file_path}")
             flash("ActuClaim report generated successfully!", "success")
         except Exception as e:
             error_details = traceback.format_exc()
@@ -393,7 +398,7 @@ def calculate():
             file_path = None
             filename = None
             flash(f"Error generating report: {str(e)}", "danger")
-        
+                
         # Return the results template
         return render_template(
             'results.html',
@@ -437,11 +442,17 @@ def download(filename):
             flash('The requested file does not exist.', 'error')
             return redirect(url_for('index'))
         
+        # Determine content type based on file extension
+        content_type = 'application/pdf'  # Default
+        if filename.endswith('.docx'):
+            content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        
         # Attempt to send the file
         return send_file(
             file_path, 
-            as_attachment=True, 
-            download_name=filename
+            as_attachment=True,
+            download_name=filename,
+            mimetype=content_type
         )
     except Exception as e:
         # Log the error for debugging
