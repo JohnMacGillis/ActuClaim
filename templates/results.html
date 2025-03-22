@@ -11,7 +11,6 @@
     <div class="results-header">
         <div class="header-content">
             <h1>Economic Damages Assessment</h1>
-            <button id="copyTablesBtn" class="btn btn-primary">Copy Tables to Clipboard</button>
              <div class="download-section">
                 {% if filename %}
                 <div class="mb-3">
@@ -290,7 +289,7 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Get all the values we need
+    // Original code for calculating and animating totals
     const pastWagesWithInterestElement = document.querySelector('.damages-summary-table tr:first-child .text-end');
     const futureWagesElement = document.querySelector('.damages-summary-table tr:nth-child(2) .text-end');
     const totalElement = document.querySelector('.damages-summary-table .total-row .text-end');
@@ -304,8 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const correctTotal = pastWagesWithInterest + futureWages;
         
         // Format and update the total
-        totalElement.textContent = '
- + correctTotal.toLocaleString('en-US', {
+        totalElement.textContent = '$' + correctTotal.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
@@ -321,8 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
             const currentValue = progress * finalValue;
-            element.textContent = '
- + currentValue.toLocaleString('en-US', {
+            element.textContent = '$' + currentValue.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
@@ -333,57 +330,109 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         window.requestAnimationFrame(step);
     }
-});
-</script>
-<script>
-document.getElementById('copyTablesBtn').addEventListener('click', function() {
-    // Get all tables
-    const tables = document.querySelectorAll('.table');
-    let text = '';
     
-    // Extract data from each table
-    tables.forEach(function(table) {
-        // Try to get the heading
-        let heading = '';
-        const cardEl = table.closest('.card');
-        if (cardEl && cardEl.querySelector('h2')) {
-            heading = cardEl.querySelector('h2').textContent;
-            text += heading + '\n';
+    // First, remove any existing copy buttons to avoid duplicates
+    const existingButtons = document.querySelectorAll('#copyTablesBtn');
+    existingButtons.forEach(button => button.remove());
+    
+    // Add copy button to the header
+    const headerContent = document.querySelector('.header-content');
+    if (headerContent) {
+        const copyButton = document.createElement('button');
+        copyButton.id = 'copyTablesBtn';
+        copyButton.className = 'btn btn-primary';
+        copyButton.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
+        copyButton.style.marginBottom = '10px';
+        copyButton.style.marginLeft = '10px';
+        
+        // Insert button after heading
+        const heading = headerContent.querySelector('h1');
+        if (heading) {
+            heading.parentNode.insertBefore(copyButton, heading.nextSibling);
+        } else {
+            headerContent.prepend(copyButton);
         }
         
-        // Get rows
-        const rows = table.querySelectorAll('tr');
-        rows.forEach(function(row) {
-            const cells = row.querySelectorAll('td');
-            let rowText = '';
-            cells.forEach(function(cell) {
-                rowText += cell.textContent.trim() + '\t';
-            });
-            text += rowText + '\n';
+        // Add click event listener for basic HTML table format (Excel-like)
+        copyButton.addEventListener('click', function() {
+            try {
+                // Create HTML content for copying - simple Excel-like tables
+                let htmlContent = '<div style="font-family: Arial, sans-serif;">';
+                htmlContent += '<h2>ACTUCLAIM ECONOMIC DAMAGES CALCULATION</h2>';
+                
+                // Copy each table with simple styling
+                const tables = document.querySelectorAll('.table');
+                tables.forEach(function(table) {
+                    // Get the table heading
+                    const cardEl = table.closest('.card');
+                    if (cardEl && cardEl.querySelector('h2')) {
+                        htmlContent += '<h3>' + cardEl.querySelector('h2').textContent.trim() + '</h3>';
+                    }
+                    
+                    // Create a simple table with basic Excel-like styling
+                    htmlContent += '<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse;">';
+                    
+                    // Get rows
+                    const rows = table.querySelectorAll('tr');
+                    rows.forEach(function(row) {
+                        htmlContent += '<tr>';
+                        
+                        // Get cells
+                        const cells = row.querySelectorAll('td');
+                        cells.forEach(function(cell) {
+                            // Determine if it's a number cell for right alignment
+                            const isAmount = cell.classList.contains('text-end');
+                            const align = isAmount ? 'right' : 'left';
+                            
+                            // Add cell with minimal styling
+                            htmlContent += '<td style="border: 1px solid black; text-align: ' + align + ';">' + 
+                                          cell.textContent.trim() + '</td>';
+                        });
+                        
+                        htmlContent += '</tr>';
+                    });
+                    
+                    htmlContent += '</table><br>';
+                });
+                
+                htmlContent += '</div>';
+                
+                // Create a hidden div to hold the HTML content
+                const container = document.createElement('div');
+                container.innerHTML = htmlContent;
+                container.style.position = 'fixed';
+                container.style.top = '-9999px';
+                document.body.appendChild(container);
+                
+                // Select the content
+                const range = document.createRange();
+                range.selectNode(container);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                
+                // Copy the HTML content
+                document.execCommand('copy');
+                
+                // Clean up
+                selection.removeAllRanges();
+                document.body.removeChild(container);
+                
+                // Show feedback
+                this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
+                }, 2000);
+                
+            } catch(err) {
+                console.error('Copy failed:', err);
+                this.innerHTML = '<i class="fas fa-times"></i> Error!';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy"></i> Copy Tables';
+                }, 2000);
+            }
         });
-        
-        text += '\n\n';
-    });
-    
-    // Create temporary element
-    var tempElement = document.createElement('textarea');
-    tempElement.value = text;
-    document.body.appendChild(tempElement);
-    
-    // Select and copy
-    tempElement.select();
-    document.execCommand('copy');
-    
-    // Remove temporary element
-    document.body.removeChild(tempElement);
-    
-    // Change button text temporarily
-    this.textContent = 'Copied!';
-    var btn = this;
-    setTimeout(function() {
-        btn.textContent = 'Copy Tables to Clipboard';
-    }, 2000);
+    }
 });
 </script>
 {% endblock %}
-
