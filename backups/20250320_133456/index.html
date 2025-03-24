@@ -392,21 +392,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-4">
-                            <label for="calculate_future_wages" class="form-label">Calculate Future Lost Wages?</label>
-                            <div class="form-check form-switch mt-2" style="margin-left: 20px;">
-                                <input class="form-check-input" type="checkbox" id="calculate_future_wages" name="calculate_future_wages" style="transform: scale(1.8); cursor: pointer;" checked>
-                                <label class="form-check-label" for="calculate_future_wages"></label>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 
                 <div class="row mt-4">
                     <div class="col-md-6">
                         <div class="form-group mb-4">
-                            <label for="start_date" class="form-label required-field">Proposal Date</label>
+                            <label for="start_date" class="form-label required-field">Future Lost Wages Start Date</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
                                 <input type="date" class="form-control" id="start_date" name="start_date" required>
@@ -685,73 +676,23 @@
             input.addEventListener('input', checkSectionCompletion);
         });
         
-        // Combined form validation and PJI rate check
+        // Form validation
         document.getElementById('calculator-form').addEventListener('submit', function(event) {
-            // Make sure the hidden PJI rate field is populated
-            const pjiRateDisplay = document.getElementById('pji_rate_display');
-            const pjiRateInput = document.getElementById('pji_rate');
-    
-            // If the display has a value but the hidden input doesn't, extract it
-            if (pjiRateDisplay.value && (!pjiRateInput.value || pjiRateInput.value === "")) {
-                // Extract the numeric value from the display (remove % and any other text)
-                const match = pjiRateDisplay.value.match(/(\d+\.?\d*)/);
-                if (match && match[1]) {
-                    pjiRateInput.value = match[1];
-                } else {
-                    // Fallback to default
-                    pjiRateInput.value = "2.5";
-                }
-            }
-    
-            console.log("Submitting form with PJI rate:", pjiRateInput.value);
-    
-            // Additional validation
+            // Additional validation can be added here if needed
+            // For example, ensure end_date is after start_date
             const startDate = document.getElementById('start_date').value;
             const endDate = document.getElementById('end_date').value;
             const returnStatusValue = document.getElementById('return_status').value;
-    
+            
             if (returnStatusValue === 'returning to work' && new Date(endDate) <= new Date(startDate)) {
                 alert('Return to work date must be after the future lost wages start date');
                 event.preventDefault();
                 return false;
             }
-        });        
+        });
+        
         // Update PJI rate when loss date changes
         const lossDateInput = document.getElementById('loss_date');
-        const calculateFutureWagesToggle = document.getElementById("calculate_future_wages");
-        const startDateGroup = document.getElementById("start_date").closest(".form-group");
-        const returnStatusGroup = document.getElementById("return_status").closest(".form-group");
-        // Function to toggle visibility of future lost wages fields
-        function toggleFutureWagesFields() {
-            // Fields that should be optional when not calculating future lost wages
-            const fieldIds = ["start_date", "return_status", "birthdate", "retirement_age", "spec_return_date"];
-            
-            if (calculateFutureWagesToggle.checked) {
-                startDateGroup.closest(".col-md-6").style.display = "block";
-                returnStatusGroup.closest(".col-md-6").style.display = "block";
-                
-                // Make fields required again
-                fieldIds.forEach(id => {
-                    const field = document.getElementById(id);
-                    if (field) field.setAttribute("required", "");
-                });
-            } else {
-                startDateGroup.closest(".col-md-6").style.display = "none";
-                returnStatusGroup.closest(".col-md-6").style.display = "none";
-                
-                // Make fields optional
-                fieldIds.forEach(id => {
-                    const field = document.getElementById(id);
-                    if (field) field.removeAttribute("required");
-                });
-            }
-        }
-        // Initial toggle state
-        toggleFutureWagesFields();
-
-        // Add event listener to toggle
-        calculateFutureWagesToggle.addEventListener("change", toggleFutureWagesFields);
-
         if (lossDateInput) {
             lossDateInput.addEventListener('change', function() {
                 // Update PJI rate when loss date changes
@@ -879,26 +820,6 @@
         // Add the new T-Bill rate calculation code here:
         // Get references to the relevant form elements
         const lossDateInput = document.getElementById('loss_date');
-        const calculateFutureWagesToggle = document.getElementById("calculate_future_wages");
-        const startDateGroup = document.getElementById("start_date").closest(".form-group");
-        const returnStatusGroup = document.getElementById("return_status").closest(".form-group");
-        // Function to toggle visibility of future lost wages fields
-        function toggleFutureWagesFields() {
-            if (calculateFutureWagesToggle.checked) {
-                startDateGroup.closest(".col-md-6").style.display = "block";
-                returnStatusGroup.closest(".col-md-6").style.display = "block";
-            } else {
-                startDateGroup.closest(".col-md-6").style.display = "none";
-                returnStatusGroup.closest(".col-md-6").style.display = "none";
-            }
-        }
-
-        // Initial toggle state
-        toggleFutureWagesFields();
-
-        // Add event listener to toggle
-        calculateFutureWagesToggle.addEventListener("change", toggleFutureWagesFields);
-
         const calculationDateInput = document.getElementById('start_date'); // Using start_date as calculation date
         const pjiRateDisplay = document.getElementById('pji_rate_display');
         const pjiRateInput = document.getElementById('pji_rate');

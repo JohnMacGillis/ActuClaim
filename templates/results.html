@@ -195,12 +195,8 @@
                             </tr>
                             <tr>
                                 <td>PJI Rate</td>
-                                <td class="text-end">
-                                {% if calculation_details.get('PJI Rate', 0) > 0 %}
-                                    {{ "{:.2f}%".format(calculation_details.get('PJI Rate', 0)) }}
-                                {% else %}
-                                    {{ "{:.2f}%".format(2.5) }} <!-- Default fallback rate -->
-                                {% endif %}
+                                <td class="text-end" id="pji-rate-cell">
+                                    {{ "{:.2f}%".format(calculation_details.get('PJI Rate', 2.5)) }}
                                 </td>
                             </tr>
                             <tr>
@@ -214,7 +210,7 @@
                                 {% elif loss_date is defined and current_date is defined %}
                                     {% set days_diff = (current_date - loss_date).days %}
                                     {% set years_diff = days_diff / 365.25 %}
-                                    {% set interest = net_past_lost_wages * (years_diff * 2.5 / 100) %}
+                                    {% set interest = net_past_lost_wages * (years_diff * calculation_details.get('PJI Rate', 2.5) / 100) %}
                                     ${{ "{:,.2f}".format(interest) }}
                                 {% else %}
                                     $0.00
@@ -234,7 +230,7 @@
                                         {% elif loss_date is defined and current_date is defined %}
                                             {% set days_diff = (current_date - loss_date).days %}
                                             {% set years_diff = days_diff / 365.25 %}
-                                            {% set interest_amount = net_past_lost_wages * (years_diff * 2.5 / 100) %}
+                                            {% set interest_amount = net_past_lost_wages * (years_diff * calculation_details.get('PJI Rate', 2.5) / 100) %}
                                         {% endif %}
                                     {% endif %}
                                     ${{ "{:,.2f}".format(net_past_lost_wages + interest_amount) }}
@@ -371,34 +367,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     htmlContent += '<h3 style="color: black; margin: 8px 0 3px 0; background-color: white !important;">' + 
                                   cardEl.querySelector('h2').textContent.trim() + '</h3>';
                 }
-                
+    
                 // Explicitly set white background for table
                 htmlContent += '<table border="1" cellspacing="0" cellpadding="2" style="border-collapse: collapse; border: 1px solid black; background-color: white !important;">';
-                
+    
                 // Process rows
                 const rows = table.querySelectorAll('tr');
                 rows.forEach(function(row) {
                     // Explicitly set white background for row
                     htmlContent += '<tr style="background-color: white !important;">';
-                    
+        
                     // Process cells
                     const cells = row.querySelectorAll('td');
                     cells.forEach(function(cell) {
                         const isAmount = cell.classList.contains('text-end');
                         const align = isAmount ? 'right' : 'left';
-                        
+            
                         // Explicitly set white background for cell
                         htmlContent += '<td style="border: 1px solid black; text-align: ' + align + 
-                                    '; color: black; padding: 2px 4px; background-color: white !important;">' + 
-                                    cell.textContent.trim() + '</td>';
+                        '; color: black; padding: 2px 4px; background-color: white !important;">' + 
+                        cell.textContent.trim() + '</td>';
                     });
-                    
+        
                     htmlContent += '</tr>';
                 });
-                
+    
                 htmlContent += '</table>';
-            });
-            
+            });            
             htmlContent += '</div>';
             
             // Use a different approach for copying styled content
@@ -449,6 +444,144 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 2000);
         }
     });
+});
+// Calculate PJI rate using API call
+document.addEventListener('DOMContentLoaded', function() {
+    // Get the loss date from the page
+    const lossDateRow = document.querySelector('.pre-judgment-interest tr:nth-child(2)');
+    if (!lossDateRow) return;
+    
+    const lossDateCell = lossDateRow.querySelector('.text-end');
+    if (!lossDateCell) return;
+    
+    const lossDateText = lossDateCell.textContent.trim();
+    if (!lossDateText || lossDateText === "Not specified") return;
+    
+    // Format for API call
+    let lossDate;
+    try {
+        // Try to parse date in various formats
+        if (lossDateText.includes(" ")) {
+            // Text format like "March 24, 2023"
+            const date = new Date(lossDateText);
+            lossDate = date.toISOString().split('T')[0]; // Convert to YYYY-MM-DD
+        } else {
+            // Already YYYY-MM-DD format
+            lossDate = lossDateText;
+        }
+    } catch (error) {
+        console.error("Error parsing loss date:", error);
+        return;
+    }
+    
+    console.log("Calculating PJI rate for loss date:", lossDate);
+    
+    // Get current date for end date
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Make API call to get PJI rate
+    fetch(`/api/tbill-rate?start_date=${encodeURIComponent(lossDate)}&end_date=${encodeURIComponent(today)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Update PJI rate display
+            if (data && data.rate !== undefined) {
+                // Update the PJI rate cell
+                const pjiRateCell = document.getElementById('pji-rate-cell');
+                if (pjiRateCell) {
+                    pjiRateCell.textContent = `${data.rate.toFixed(2)}%`;
+                    console.log("Updated PJI rate to:", data.rate.toFixed(2) + "%");
+                    
+                    // Also update interest calculation
+                    updateInterestCalculation(data.rate);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching PJI rate:', error);
+        });
+    
+    // Function to update interest calculation based on new PJI rate
+    function updateInterestCalculation(pjiRate) {
+        // Get original past lost wages
+        const pastLostWagesRow = document.querySelector('.pre-judgment-interest tr:nth-child(1)');
+        if (!pastLostWagesRow) return;
+        
+        const pastLostWagesCell = pastLostWagesRow.querySelector('.text-end');
+        if (!pastLostWagesCell) return;
+        
+        const pastLostWagesText = pastLostWagesCell.textContent.trim();
+        const pastLostWages = parseFloat(pastLostWagesText.replace(/[^0-9.-]+/g, ''));
+        
+        // Get years between
+        const yearsBetweenRow = document.querySelector('.pre-judgment-interest tr:nth-child(4)');
+        if (!yearsBetweenRow) return;
+        
+        const yearsBetweenCell = yearsBetweenRow.querySelector('.text-end');
+        if (!yearsBetweenCell) return;
+        
+        const yearsBetweenText = yearsBetweenCell.textContent.trim();
+        const yearsBetween = parseFloat(yearsBetweenText);
+        
+        // Calculate interest amount
+        const interestAmount = pastLostWages * (yearsBetween * pjiRate / 100);
+        
+        // Update interest amount cell
+        const interestAmountRow = document.querySelector('.pre-judgment-interest tr:nth-child(6)');
+        if (interestAmountRow) {
+            const interestAmountCell = interestAmountRow.querySelector('.text-end');
+            if (interestAmountCell) {
+                interestAmountCell.textContent = `$${interestAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+            }
+        }
+        
+        // Update total with interest
+        const totalRow = document.querySelector('.pre-judgment-interest tr.total-row');
+        if (totalRow) {
+            const totalCell = totalRow.querySelector('.text-end');
+            if (totalCell) {
+                const totalWithInterest = pastLostWages + interestAmount;
+                totalCell.textContent = `$${totalWithInterest.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+            }
+        }
+        
+        // Update total damages
+        updateTotalDamages();
+    }
+    
+    // Function to update total damages
+    function updateTotalDamages() {
+        // Get past lost wages with interest
+        const pastWithInterestRow = document.querySelector('.pre-judgment-interest tr.total-row');
+        if (!pastWithInterestRow) return;
+        
+        const pastWithInterestCell = pastWithInterestRow.querySelector('.text-end');
+        if (!pastWithInterestCell) return;
+        
+        const pastWithInterestText = pastWithInterestCell.textContent.trim();
+        const pastWithInterest = parseFloat(pastWithInterestText.replace(/[^0-9.-]+/g, ''));
+        
+        // Get future lost wages
+        const futureLostWagesRow = document.querySelector('.future-lost-wages tr.total-row');
+        if (!futureLostWagesRow) return;
+        
+        const futureLostWagesCell = futureLostWagesRow.querySelector('.text-end');
+        if (!futureLostWagesCell) return;
+        
+        const futureLostWagesText = futureLostWagesCell.textContent.trim();
+        const futureLostWages = parseFloat(futureLostWagesText.replace(/[^0-9.-]+/g, ''));
+        
+        // Update total damages
+        const totalDamagesAmount = pastWithInterest + futureLostWages;
+        const totalDamagesElement = document.getElementById('total-damages-amount');
+        if (totalDamagesElement) {
+            totalDamagesElement.textContent = `$${totalDamagesAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+        }
+    }
 });
 </script>
 {% endblock %}
