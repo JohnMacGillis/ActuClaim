@@ -8,12 +8,6 @@ import traceback
 from pji_routes import pji_routes
 from werkzeug.utils import secure_filename
 from tax_utils import get_tax_rates, get_available_tax_years, calculate_tax
-from email_results import send_results_email
-import email_config  # This will load the email configuration
-try:
-    import mailgun_config
-except ImportError:
-    print("Warning: Mailgun configuration not found. Email may not work properly.")
 
 # Import calculation functions
 from income_calculations import calculate_take_home, calculate_collateral_benefits
@@ -51,10 +45,6 @@ def calculate():
         client_name = request.form.get('client_name', 'Client')
         province = request.form.get('province', 'nova scotia')
         dependents = int(request.form.get("dependents", "0"))
-        # Get number of dependents
-        dependents = int(request.form.get("dependents", 0))
-        # Get number of dependents
-        dependents = int(request.form.get("dependents", 0))
         
         # Helper function for safe float conversion
         def safe_float(value_str, default=0):
@@ -86,12 +76,8 @@ def calculate():
             salary = safe_float(request.form.get('salary'), 0)
             hours_per_day = safe_float(request.form.get('hours_per_day'), 8)
         
-        # Get number of dependents
-        num_dependents = int(request.form.get("num_dependents", 0))
-
         # Calculate take-home pay
         result = calculate_take_home(salary, province, working_days, hours_per_day, is_hourly, hours_per_week, dependents)
-        logging.debug(f"Full Result: {result}")
         logging.debug(f"Dependents: {dependents}")
         logging.debug(f"Province: {province}")
         logging.debug(f"Salary: {salary}")
@@ -187,7 +173,7 @@ def calculate():
         
         time_fraction = fraction_of_year.get(missed_time_unit, 0)
         
-	# Add dependents to calculation details
+        # Add dependents to calculation details
         calculation_details = {} # Initialize empty dictionary if needed
         calculation_details["Dependents"] = str(dependents)
         
@@ -224,9 +210,7 @@ def calculate():
             try:
                 # Get PJI rate from form
                 pji_rate = request.form.get('pji_rate')
-                print(f"IMPORTANT - PJI rate from form: {pji_rate}")
                 
-                print("Calling calculate_past_lost_wages_with_interest with:", net_past_lost_wages, loss_date.strftime('%Y-%m-%d'), pji_rate)
                 past_lost_wages_with_interest, calculation_details = calculate_past_lost_wages_with_interest(
                     net_past_lost_wages,
                     loss_date.strftime('%Y-%m-%d'),  # Convert date object to string
@@ -237,14 +221,11 @@ def calculate():
                 if pji_rate is not None:
                     try:
                         calculation_details["PJI Rate"] = float(pji_rate)
-                        print(f"Forced PJI Rate to: {calculation_details['PJI Rate']}")
                     except (ValueError, TypeError):
-                        print(f"Could not convert PJI rate: {pji_rate}")
+                        pass
                 
                 calculation_details["Dependents"] = str(dependents)
-                print("Function returned:", past_lost_wages_with_interest)
             except Exception as e:
-                print(f"Error in calculate_past_lost_wages_with_interest: {e}")
                 # Provide default values
                 past_lost_wages_with_interest = net_past_lost_wages  # Use base amount without interest
                 calculation_details = {
@@ -270,8 +251,6 @@ def calculate():
             calculation_details["Interest Amount"] = interest_amount
             calculation_details["Past Lost Wages with Interest"] = base_amount + interest_amount
             past_lost_wages_with_interest = base_amount + interest_amount
-            
-            print(f"Recalculated Interest: ${interest_amount:.2f}")
         
         # Make sure the original_past_lost_wages is set in calculation_details
         if "Original Past Lost Wages" not in calculation_details:
@@ -379,7 +358,7 @@ def calculate():
         # Calculate total damages
         total_damages = past_lost_wages_with_interest + present_value
         
-        # Store calculation results in session for email instead of generating Word document
+        # Store calculation results in session for later use
         session['client_name'] = client_name
         session['province'] = province
         session['calculation_details'] = calculation_details
@@ -416,148 +395,17 @@ def calculate():
             missed_time=missed_time,
             birthdate=birthdate,
             retirement_age=retirement_age,
-    loss_date=loss_date,
-    current_date=today,
-    ei_days_remaining=max(0, 182 - (today - ei_start_date).days)
+            loss_date=loss_date,
+            current_date=today,
+            ei_days_remaining=max(0, 182 - (today - ei_start_date).days)
         )
     
     except Exception as e:
         error_details = traceback.format_exc()
-        print(f"Error in calculate route: {e}")
-        print(f"Detailed error traceback: {error_details}")
+        logging.error(f"Error in calculate route: {e}")
+        logging.error(f"Detailed error traceback: {error_details}")
         flash(f"An error occurred: {str(e)}")
         return redirect(url_for('index'))
-        
-        # Store calculation results in session for email sending
-        session['client_name'] = client_name
-        session['province'] = province
-        session['calculation_details'] = calculation_details
-        session['present_value_details'] = present_value_details
-        session['result'] = result
-        session['collateral_benefits'] = collateral_benefits
-        session['missed_time_unit'] = missed_time_unit
-        session['missed_time'] = missed_time
-        session['birthdate'] = birthdate.strftime('%Y-%m-%d') if birthdate else None
-        session['retirement_age'] = retirement_age
-        session['loss_date'] = loss_date.strftime('%Y-%m-%d') if loss_date else None
-        session['current_date'] = today.strftime('%Y-%m-%d')
-        session['ei_days_remaining'] = max(0, 182 - (today - ei_start_date).days) if ei_start_date else 0
-        session['missed_pay'] = missed_pay
-        session['net_past_lost_wages'] = net_past_lost_wages
-        session['past_lost_wages_with_interest'] = past_lost_wages_with_interest
-        session['total_damages'] = total_damages
-
-@app.route('/send-results-email', methods=['POST'])
-def send_email():
-    # Create a log file if it doesn't exist
-    with open('/var/www/actuclaim/email_debug.log', 'a') as f:
-        f.write(f"\n\n--- New email attempt: {datetime.datetime.now()} ---\n")
-        
-        try:
-            # Get the recipient email from the form
-            recipient_email = request.form.get('email')
-            f.write(f"Recipient: {recipient_email}\n")
-            
-            if not recipient_email:
-                f.write("No recipient email provided\n")
-                flash('Email address is required', 'danger')
-                return redirect(url_for('index'))
-            
-            # Retrieve session variables with calculation results
-            client_name = session.get('client_name', 'Client')
-            province = session.get('province', 'Not specified')
-            calculation_details = session.get('calculation_details', {})
-            present_value_details = session.get('present_value_details', {})
-            result = session.get('result', {})
-            collateral_benefits = session.get('collateral_benefits', {})
-            missed_time_unit = session.get('missed_time_unit', '')
-            missed_time = session.get('missed_time', 0)
-            birthdate = session.get('birthdate', None)
-            retirement_age = session.get('retirement_age', None)
-            loss_date = session.get('loss_date', None)
-            current_date = datetime.date.today()
-            ei_days_remaining = session.get('ei_days_remaining', 0)
-            missed_pay = session.get('missed_pay', 0)
-            net_past_lost_wages = session.get('net_past_lost_wages', 0)
-            past_lost_wages_with_interest = session.get('past_lost_wages_with_interest', 0)
-            total_damages = session.get('total_damages', 0)
-            
-            f.write(f"Client: {client_name}, Province: {province}\n")
-            f.write(f"Session data retrieved\n")
-            
-            # Convert date strings to date objects if needed
-            if isinstance(loss_date, str):
-                try:
-                    loss_date = datetime.datetime.strptime(loss_date, '%Y-%m-%d').date()
-                    f.write(f"Converted loss_date string to date: {loss_date}\n")
-                except ValueError:
-                    loss_date = current_date - datetime.timedelta(days=365)  # Default to 1 year ago
-                    f.write(f"Using default loss_date: {loss_date}\n")
-            
-            if isinstance(birthdate, str):
-                try:
-                    birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d').date()
-                    f.write(f"Converted birthdate string to date: {birthdate}\n")
-                except ValueError:
-                    birthdate = None
-                    f.write("Could not convert birthdate, using None\n")
-            
-            # Log important values
-            f.write(f"Past lost wages with interest: {past_lost_wages_with_interest}\n")
-            f.write(f"Total damages: {total_damages}\n")
-            
-            # Send the email
-            f.write("About to call send_results_email\n")
-            
-            try:
-                email_sent = send_results_email(
-                    recipient_email=recipient_email,
-                    client_name=client_name,
-                    province=province,
-                    calculation_details=calculation_details,
-                    present_value_details=present_value_details,
-                    result=result,
-                    collateral_benefits=collateral_benefits,
-                    missed_time_unit=missed_time_unit,
-                    missed_time=missed_time,
-                    past_lost_wages_with_interest=past_lost_wages_with_interest,
-                    net_past_lost_wages=net_past_lost_wages,
-                    missed_pay=missed_pay,
-                    total_damages=total_damages,
-                    birthdate=birthdate,
-                    retirement_age=retirement_age,
-                    loss_date=loss_date,
-                    current_date=current_date,
-                    ei_days_remaining=ei_days_remaining
-                )
-                
-                f.write(f"Send result: {email_sent}\n")
-                
-                if email_sent:
-                    f.write("Email sent successfully\n")
-                    flash('Results successfully sent to ' + recipient_email, 'success')
-                else:
-                    f.write("Email sending failed\n")
-                    flash('Failed to send email. Please check the email configuration.', 'danger')
-                
-                # Redirect to results page
-                f.write("Redirecting to results page\n")
-                return redirect(url_for('results'))
-                
-            except Exception as email_error:
-                f.write(f"Exception in send_results_email call: {str(email_error)}\n")
-                f.write(traceback.format_exc())
-                flash(f"Error sending email: {str(email_error)}", 'danger')
-                return redirect(url_for('results'))
-            
-        except Exception as e:
-            error_details = traceback.format_exc()
-            f.write(f"Error in send_email function: {str(e)}\n")
-            f.write(f"Traceback: {error_details}\n")
-            print(f"Error sending email: {e}")
-            print(f"Detailed error traceback: {error_details}")
-            flash(f"Error sending email: {str(e)}", 'danger')
-            return redirect(url_for('index'))
 
 @app.route('/results')
 def results():
@@ -590,6 +438,7 @@ def results():
         current_date=datetime.date.today(),
         ei_days_remaining=session.get('ei_days_remaining', 0)
     )
+
 app.register_blueprint(pji_routes)
 
 if __name__ == '__main__':

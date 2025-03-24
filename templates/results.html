@@ -11,40 +11,8 @@
     <div class="results-header">
         <div class="header-content">
             <h1>Economic Damages Assessment</h1>
-             <div class="download-section">
-                {% if filename %}
-                <div class="mb-3">
-                    <a href="{{ url_for('download', filename=filename) }}" class="btn btn-primary download-btn">
-                        <i class="fas fa-file-word"></i> Download Word Report
-                    </a>
-                </div>
-                {% endif %}
-                
-                <!-- Email Form -->
-                <div class="email-form-card card mt-4">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0"><i class="fas fa-envelope"></i> Send Results via Email</h4>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ url_for('send_email') }}" method="post">
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Recipient Email Address</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-at"></i></span>
-                                    <input type="email" class="form-control" id="email" name="email" 
-                                            placeholder="Enter email address" required>
-                                </div>
-                                <small class="form-text text-muted">
-                                    The calculation results will be sent to this email address in the same format as shown on this page.
-                                </small>
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane me-2"></i> Send Results
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+        </div>
+    </div>
 
     <div class="damages-summary-card">
         <table class="table damages-summary-table">
@@ -201,7 +169,7 @@
                             </tr>
                             <tr>
                                 <td>Pre-Judgment Interest Amount</td>
-                                <td class="text-end">
+                                <td class="text-end" id="interest-amount-cell">
                                 {% if calculation_details.get('Interest Amount', 0) > 0 %}
                                     ${{ "{:,.2f}".format(calculation_details.get('Interest Amount', 0)) }}
                                 {% elif calculation_details.get('Years Between', 0) > 0 and calculation_details.get('PJI Rate', 0) > 0 %}
@@ -219,7 +187,7 @@
                             </tr>
                             <tr class="total-row highlight">
                                 <td>Past Lost Wages with Interest</td>
-                                <td class="text-end">
+                                <td class="text-end" id="past-with-interest-cell">
                                 {% if past_lost_wages_with_interest > 0 %}
                                     ${{ "{:,.2f}".format(past_lost_wages_with_interest) }}
                                 {% else %}
@@ -266,7 +234,7 @@
                             </tr>
                             <tr class="total-row">
                                 <td>Present Value of Future Lost Wages</td>
-                                <td class="text-end">${{ "{:,.2f}".format(present_value_details.get('present_value', 0)) }}</td>
+                                <td class="text-end" id="future-lost-wages-cell">${{ "{:,.2f}".format(present_value_details.get('present_value', 0)) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -285,49 +253,73 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Original code for calculating and animating totals
-    const pastWagesWithInterestElement = document.querySelector('.damages-summary-table tr:first-child .text-end');
-    const futureWagesElement = document.querySelector('.damages-summary-table tr:nth-child(2) .text-end');
-    const totalElement = document.querySelector('.damages-summary-table .total-row .text-end');
+    // Define function to update interest calculation based on new PJI rate first
+    function updateInterestCalculation(pjiRate) {
+        // Get original past lost wages
+        const pastLostWagesRow = document.querySelector('.pre-judgment-interest tr:nth-child(1)');
+        if (!pastLostWagesRow) return;
+        
+        const pastLostWagesCell = pastLostWagesRow.querySelector('.text-end');
+        if (!pastLostWagesCell) return;
+        
+        const pastLostWagesText = pastLostWagesCell.textContent.trim();
+        const pastLostWages = parseFloat(pastLostWagesText.replace(/[^0-9.-]+/g, ''));
+        
+        // Get years between
+        const yearsBetweenRow = document.querySelector('.pre-judgment-interest tr:nth-child(4)');
+        if (!yearsBetweenRow) return;
+        
+        const yearsBetweenCell = yearsBetweenRow.querySelector('.text-end');
+        if (!yearsBetweenCell) return;
+        
+        const yearsBetweenText = yearsBetweenCell.textContent.trim();
+        const yearsBetween = parseFloat(yearsBetweenText);
+        
+        // Calculate interest amount
+        const interestAmount = pastLostWages * (yearsBetween * pjiRate / 100);
+        
+        // Update interest amount cell
+        const interestAmountCell = document.getElementById('interest-amount-cell');
+        if (interestAmountCell) {
+            interestAmountCell.textContent = `$${interestAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+        }
+        
+        // Update total with interest
+        const totalWithInterest = pastLostWages + interestAmount;
+        const pastWithInterestCell = document.getElementById('past-with-interest-cell');
+        if (pastWithInterestCell) {
+            pastWithInterestCell.textContent = `$${totalWithInterest.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+        }
+        
+        // Update total damages
+        updateTotalDamages();
+    }
     
-    if (pastWagesWithInterestElement && futureWagesElement && totalElement) {
-        // Parse values (remove $ and commas)
-        const pastWagesWithInterest = parseFloat(pastWagesWithInterestElement.textContent.replace(/[,$]/g, '')) || 0;
-        const futureWages = parseFloat(futureWagesElement.textContent.replace(/[,$]/g, '')) || 0;
+    // Function to update total damages
+    function updateTotalDamages() {
+        // Get past lost wages with interest
+        const pastWithInterestCell = document.getElementById('past-with-interest-cell');
+        if (!pastWithInterestCell) return;
         
-        // Calculate the correct total
-        const correctTotal = pastWagesWithInterest + futureWages;
+        const pastWithInterestText = pastWithInterestCell.textContent.trim();
+        const pastWithInterest = parseFloat(pastWithInterestText.replace(/[^0-9.-]+/g, ''));
         
-        // Format and update the total
-        totalElement.textContent = '$' + correctTotal.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
+        // Get future lost wages
+        const futureLostWagesCell = document.getElementById('future-lost-wages-cell');
+        if (!futureLostWagesCell) return;
         
-        // Now animate the total
-        animateCounter(totalElement, correctTotal);
+        const futureLostWagesText = futureLostWagesCell.textContent.trim();
+        const futureLostWages = parseFloat(futureLostWagesText.replace(/[^0-9.-]+/g, ''));
+        
+        // Update total damages
+        const totalDamagesAmount = pastWithInterest + futureLostWages;
+        const totalDamagesElement = document.getElementById('total-damages-amount');
+        if (totalDamagesElement) {
+            totalDamagesElement.textContent = `$${totalDamagesAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+        }
     }
 
-    function animateCounter(element, finalValue, duration = 1500) {
-        const originalText = element.textContent;
-        let startTimestamp = null;
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            const currentValue = progress * finalValue;
-            element.textContent = '$' + currentValue.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
-            }
-        };
-        window.requestAnimationFrame(step);
-    }
-    
-    // Add copy button
+    // Create and add the copy button
     const copyButton = document.createElement('button');
     copyButton.id = 'copyTablesBtn';
     copyButton.className = 'btn btn-primary';
@@ -351,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add event listener to the button
+    // Add event listener to the copy button
     copyButton.addEventListener('click', function() {
         try {
             // Create HTML content with explicit white backgrounds everywhere
@@ -444,10 +436,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 2000);
         }
     });
-});
-// Calculate PJI rate using API call
-document.addEventListener('DOMContentLoaded', function() {
-    // Get the loss date from the page
+    
+    // Calculate PJI rate using API call
     const lossDateRow = document.querySelector('.pre-judgment-interest tr:nth-child(2)');
     if (!lossDateRow) return;
     
@@ -474,114 +464,50 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    console.log("Calculating PJI rate for loss date:", lossDate);
-    
     // Get current date for end date
     const today = new Date().toISOString().split('T')[0];
     
     // Make API call to get PJI rate
+    console.log(`Fetching PJI rate for dates: ${lossDate} to ${today}`);
     fetch(`/api/tbill-rate?start_date=${encodeURIComponent(lossDate)}&end_date=${encodeURIComponent(today)}`)
         .then(response => {
             if (!response.ok) {
+                console.error(`API response not OK: ${response.status} ${response.statusText}`);
                 throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(data => {
+            // Log the API response
+            console.log('PJI API response:', data);
+            
             // Update PJI rate display
             if (data && data.rate !== undefined) {
-                // Update the PJI rate cell
+                // Get the current PJI rate from the cell
                 const pjiRateCell = document.getElementById('pji-rate-cell');
                 if (pjiRateCell) {
-                    pjiRateCell.textContent = `${data.rate.toFixed(2)}%`;
-                    console.log("Updated PJI rate to:", data.rate.toFixed(2) + "%");
+                    const currentRateText = pjiRateCell.textContent.trim();
+                    const currentRate = parseFloat(currentRateText);
+                    console.log(`Current PJI Rate: ${currentRate}%, API returned: ${data.rate}%`);
                     
-                    // Also update interest calculation
-                    updateInterestCalculation(data.rate);
+                    // Only update if the rate has changed or if we're forcing the update
+                    if (Math.abs(data.rate - currentRate) > 0.01) {
+                        console.log(`Updating PJI rate to ${data.rate}%`);
+                        pjiRateCell.textContent = `${data.rate.toFixed(2)}%`;
+                        
+                        // Also update interest calculation
+                        updateInterestCalculation(data.rate);
+                    } else {
+                        console.log('PJI rate unchanged, not updating calculations');
+                    }
                 }
+            } else {
+                console.warn('API response missing rate value:', data);
             }
         })
         .catch(error => {
             console.error('Error fetching PJI rate:', error);
         });
-    
-    // Function to update interest calculation based on new PJI rate
-    function updateInterestCalculation(pjiRate) {
-        // Get original past lost wages
-        const pastLostWagesRow = document.querySelector('.pre-judgment-interest tr:nth-child(1)');
-        if (!pastLostWagesRow) return;
-        
-        const pastLostWagesCell = pastLostWagesRow.querySelector('.text-end');
-        if (!pastLostWagesCell) return;
-        
-        const pastLostWagesText = pastLostWagesCell.textContent.trim();
-        const pastLostWages = parseFloat(pastLostWagesText.replace(/[^0-9.-]+/g, ''));
-        
-        // Get years between
-        const yearsBetweenRow = document.querySelector('.pre-judgment-interest tr:nth-child(4)');
-        if (!yearsBetweenRow) return;
-        
-        const yearsBetweenCell = yearsBetweenRow.querySelector('.text-end');
-        if (!yearsBetweenCell) return;
-        
-        const yearsBetweenText = yearsBetweenCell.textContent.trim();
-        const yearsBetween = parseFloat(yearsBetweenText);
-        
-        // Calculate interest amount
-        const interestAmount = pastLostWages * (yearsBetween * pjiRate / 100);
-        
-        // Update interest amount cell
-        const interestAmountRow = document.querySelector('.pre-judgment-interest tr:nth-child(6)');
-        if (interestAmountRow) {
-            const interestAmountCell = interestAmountRow.querySelector('.text-end');
-            if (interestAmountCell) {
-                interestAmountCell.textContent = `$${interestAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-            }
-        }
-        
-        // Update total with interest
-        const totalRow = document.querySelector('.pre-judgment-interest tr.total-row');
-        if (totalRow) {
-            const totalCell = totalRow.querySelector('.text-end');
-            if (totalCell) {
-                const totalWithInterest = pastLostWages + interestAmount;
-                totalCell.textContent = `$${totalWithInterest.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-            }
-        }
-        
-        // Update total damages
-        updateTotalDamages();
-    }
-    
-    // Function to update total damages
-    function updateTotalDamages() {
-        // Get past lost wages with interest
-        const pastWithInterestRow = document.querySelector('.pre-judgment-interest tr.total-row');
-        if (!pastWithInterestRow) return;
-        
-        const pastWithInterestCell = pastWithInterestRow.querySelector('.text-end');
-        if (!pastWithInterestCell) return;
-        
-        const pastWithInterestText = pastWithInterestCell.textContent.trim();
-        const pastWithInterest = parseFloat(pastWithInterestText.replace(/[^0-9.-]+/g, ''));
-        
-        // Get future lost wages
-        const futureLostWagesRow = document.querySelector('.future-lost-wages tr.total-row');
-        if (!futureLostWagesRow) return;
-        
-        const futureLostWagesCell = futureLostWagesRow.querySelector('.text-end');
-        if (!futureLostWagesCell) return;
-        
-        const futureLostWagesText = futureLostWagesCell.textContent.trim();
-        const futureLostWages = parseFloat(futureLostWagesText.replace(/[^0-9.-]+/g, ''));
-        
-        // Update total damages
-        const totalDamagesAmount = pastWithInterest + futureLostWages;
-        const totalDamagesElement = document.getElementById('total-damages-amount');
-        if (totalDamagesElement) {
-            totalDamagesElement.textContent = `$${totalDamagesAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-        }
-    }
 });
 </script>
 {% endblock %}
