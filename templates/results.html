@@ -4,6 +4,26 @@
 
 {% block additional_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/results-minimalist.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/results-minimalist.css') }}">
+
+<style>
+
+.pji-explanation {
+
+    font-size: 0.85em;
+
+    color: #666;
+
+    margin-top: 5px;
+
+    padding: 0 10px;
+
+    text-align: justify;
+
+}
+
+</style>
+
 {% endblock %}
 
 {% block content %}
@@ -207,7 +227,8 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
+                    <p class="pji-explanation"><em>PJI Rate is calculated based on the average daily bond rate of 1-3 year Government of Canada marketable bonds (Series V39059) for the period beginning on the date of loss until today.</em></p>      
+                 </div>
             </div>
 
             <div class="col-md-6">
@@ -385,6 +406,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
     
                 htmlContent += '</table>';
+                
+                // Add PJI explanation after the PJI table
+                if (cardEl && cardEl.querySelector('h2') && 
+                    cardEl.querySelector('h2').textContent.trim() === 'Pre-Judgment Interest (PJI) Calculation') {
+                    htmlContent += '<p style="font-size: 0.85em; color: #666; margin-top: 5px; font-style: italic; background-color: white !important;">' +
+                        'PJI Rate is calculated based on the average daily bond rate of 1-3 year Government of Canada marketable bonds (Series V39059) for the period beginning on the date of loss until today.' +
+                        '</p>';
+                }
             });            
             htmlContent += '</div>';
             
